@@ -15,9 +15,6 @@
 
 #define TABOOSIZE (500)
 #define BIGCOUNT (9999999)
-#define THRESHOLD 50000 //temperature threshold
-#define INITEM 100000//initial temperature
-#define DTEM 100//temperature decrease interval
 
 /***
  *** example of very simple search for R(7,7) counter examples

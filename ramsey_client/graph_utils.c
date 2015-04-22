@@ -6,7 +6,7 @@
 
 
 #define MAXSIZE (541)
-
+#define sgsize (7)
 /*
  * prints in the right format for the read routine
  */
@@ -161,3 +161,192 @@ int *RandomGraphGenerator(int n)
 	}
 	return g;
 }	
+
+/*
+ ***
+ *** returns the number of monochromatic cliques in the graph presented to
+ *** it
+ ***
+ *** graph is stored in row-major order
+ *** only checks values above diagonal
+ */
+
+int CliqueCount(int *g,
+	     int gsize)
+{
+    int i;
+    int j;
+    int k;
+    int l;
+    int m;
+    int n;
+    int o;
+    int count=0;
+    int sgsize = 7;
+    
+    for(i=0;i < gsize-sgsize+1; i++)
+    {
+	for(j=i+1;j < gsize-sgsize+2; j++)
+        {
+	    for(k=j+1;k < gsize-sgsize+3; k++) 
+            { 
+		if((g[i*gsize+j] == g[i*gsize+k]) && 
+		   (g[i*gsize+j] == g[j*gsize+k]))
+		{
+		    for(l=k+1;l < gsize-sgsize+4; l++) 
+		    { 
+			if((g[i*gsize+j] == g[i*gsize+l]) && 
+			   (g[i*gsize+j] == g[j*gsize+l]) && 
+			   (g[i*gsize+j] == g[k*gsize+l]))
+			{
+			    for(m=l+1;m < gsize-sgsize+5; m++) 
+			    {
+				if((g[i*gsize+j] == g[i*gsize+m]) && 
+				   (g[i*gsize+j] == g[j*gsize+m]) &&
+				   (g[i*gsize+j] == g[k*gsize+m]) && 
+				   (g[i*gsize+j] == g[l*gsize+m])) {
+					for(n=m+1; n < gsize-sgsize+6; n++)
+					{
+						if((g[i*gsize+j]
+							== g[i*gsize+n]) &&
+						   (g[i*gsize+j] 
+							== g[j*gsize+n]) &&
+						   (g[i*gsize+j] 
+							== g[k*gsize+n]) &&
+						   (g[i*gsize+j] 
+							== g[l*gsize+n]) &&
+						   (g[i*gsize+j] 
+							== g[m*gsize+n])) {
+					for(o=n+1; o < gsize-sgsize+7; o++) {
+						if((g[i*gsize+j]
+							== g[i*gsize+o]) &&
+						   (g[i*gsize+j] 
+							== g[j*gsize+o]) &&
+						   (g[i*gsize+j] 
+							== g[k*gsize+o]) &&
+						   (g[i*gsize+j] 
+							== g[l*gsize+o]) &&
+						   (g[i*gsize+j] 
+							== g[m*gsize+o]) &&
+						   (g[i*gsize+j] == 
+							   g[n*gsize+o])) {
+			      					count++;
+						   }
+					}
+						}
+					}
+				}
+			    }
+			}
+		    }
+		}
+	    }
+         }
+     }
+    return(count);
+}
+
+
+int CliqueCount_D(int *g, int gsize, int i, int j, int flip) 
+{
+    int k;
+    int l;
+    int m;
+    int n;
+    int o;
+    int count=0;
+    
+    int color = g[i*gsize+j];
+	
+    if(flip)
+    	color = 1 - color;
+    
+    for(k=0;k < gsize-sgsize+3; k++) 
+    { 
+    	if(k==i || k==j) continue;
+    	
+    	int k_array[2];
+    	if(i<k) k_array[0]=i*gsize+k;
+    	else 	k_array[0]=k*gsize+i;
+    	if(j<k) k_array[1]=j*gsize+k;
+    	else 	k_array[1]=k*gsize+j;
+
+		if((color == g[k_array[0]]) && 
+		   (color == g[k_array[1]]))
+		{
+		    for(l=k+1;l < gsize-sgsize+4; l++) 
+		    {
+		    	if(l==i || l==j) continue;
+
+		    	int l_array[2];
+		    	if(i<l) l_array[0]=i*gsize+l;
+		    	else	l_array[0]=l*gsize+i;
+		    	if(j<l) l_array[1]=j*gsize+l;
+		    	else	l_array[1]=l*gsize+j;
+
+				if((color == g[l_array[0]]) && 
+				   (color == g[l_array[1]]) && 
+				   (color == g[k*gsize+l]))
+				{
+				    for(m=l+1;m < gsize-sgsize+5; m++) 
+				    {
+				    	if(m==i || m==j) continue;
+
+				    	int m_array[2];
+				    	if(i<m) m_array[0]=i*gsize+m;
+				    	else	m_array[0]=m*gsize+i;
+				    	if(j<m) m_array[1]=j*gsize+m;
+				    	else	m_array[1]=m*gsize+j;
+
+
+						if((color == g[m_array[0]]) && 
+						   (color == g[m_array[1]]) &&
+						   (color == g[k*gsize+m]) && 
+						   (color == g[l*gsize+m]))
+						{
+						  for(n=m+1;n<gsize-sgsize+6;n++)
+							{
+								if(n==i || n==j) continue;
+
+								int n_array[2];
+				    			if(i<n) n_array[0]=i*gsize+n;
+				    			else	n_array[0]=n*gsize+i;
+				    			if(j<n) n_array[1]=j*gsize+n;
+				    			else	n_array[1]=n*gsize+j;
+
+							  if((color == g[n_array[0]]) && 
+							   (color == g[n_array[1]]) &&
+							   (color == g[k*gsize+n]) && 
+							   (color == g[l*gsize+n]) &&
+							   (color == g[m*gsize+n]))
+							    {
+							      	for(o=n+1;o<gsize-sgsize+7;o++)
+							      		{
+							      			if(o==i || o==j) continue;
+											int o_array[2];
+								    		
+								    		if(i<o) o_array[0]=i*gsize+o;
+								    		else	o_array[0]=o*gsize+i;
+								    		
+								    		if(j<n) o_array[1]=j*gsize+o;
+								    		else	o_array[1]=o*gsize+j;
+							      			if( (color == g[o_array[0]]) && 
+											    (color == g[o_array[1]]) &&
+											    (color == g[k*gsize+o]) && 
+											    (color == g[l*gsize+o]) &&
+											    (color == g[m*gsize+o]) &&
+											    (color == g[n*gsize+o]))
+											   	 {count++;}
+							    		} 		
+								} 
+							}
+
+						}
+				    }
+				}
+		    }
+		}
+    }
+    
+return(count);
+}
