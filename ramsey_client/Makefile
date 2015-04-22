@@ -15,7 +15,7 @@ PROGRAMS = simple_taboo_search simple_taboo_search-7 test_clique_count
 all: $(PROGRAMS)
 
 anneal: anneal.c $(INCL) ${BOBJ}
-	$(COMPILE) ${INCLUDES} -o anneal anneal.c $(BOBJ) $(LIBS)
+	$(COMPILE) ${INCLUDES} -o anneal.o anneal.c $(BOBJ) $(LIBS)
 
 random: simple_taboo_search-random.c $(INCL) ${BOBJ}
 	$(COMPILE) ${INCLUDES} -o simple_taboo_search-random simple_taboo_search-random.c $(BOBJ) $(LIBS)

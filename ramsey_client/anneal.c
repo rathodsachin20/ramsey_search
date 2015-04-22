@@ -379,10 +379,9 @@ int main(int argc,char *argv[])
 		 */
 		printf("Making a choice 0 \n");
 		best_clique = INICLI;		
-		printf("best_clique: %d \n", best_clique);
-        
-        time_t t;
-        srand((unsigned) time(&t));
+		
+        time_t tim;
+        srand((unsigned) time(&tim));
 
         // Introducing randomization into system
     	int choice = rand() % 10;
@@ -398,14 +397,12 @@ int main(int argc,char *argv[])
 			gt[1]=j;
 			g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];
 
-			// Getting clique count of edges without flipping
+			// Getting clique count of edges on flipping - assuming random move is best
 			best_clique=CliqueCount_D(g,gsize,gt[0],gt[1], 0);
 
-			printf("%d", g[gt[0]*gsize+gt[1]]);
 			g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];
 		}
 		else{
-			
 			
 			for(i=0; i < gsize; i++)
 			{
@@ -420,6 +417,7 @@ int main(int argc,char *argv[])
 						
 						// Improvement with flip
 						cliques[i*gsize+j] = count + new_clique - old_clique;
+
 					}
 				}
 			}
@@ -443,40 +441,27 @@ int main(int argc,char *argv[])
 			}
 		}
 
-		printf("Checking for thresholds");
-			
-		if (best_clique<=count){
+
+		if (best_clique <= count){
 			g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];
 		}
+
 		else{
 			if (t>THRESHOLD){
+
 				g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];
 			}	
 		}
+
 		FIFOInsertEdge(taboo_list,gt[0],gt[1]);
 		t-=DTEM;	
 		if (t==0){
 				t=INITEM;
 		}
 
-		/*
-		 * keep the best flip we saw
-		 */
-		g[best_i*gsize+best_j] = 1 - g[best_i*gsize+best_j];
-
-		/*
-		 * taboo this graph configuration so that we don't visit
-		 * it again
-		 */
-		count = CliqueCount(g,gsize);
-		FIFOInsertEdge(taboo_list,best_i,best_j);
-
-		printf("ce size: %d, best_count: %d, best edge: (%d,%d), new color: %d\n",
+		printf("size: %d, best_count: %d",
 				gsize,
-				best_count,
-				best_i,
-				best_j,
-				g[best_i*gsize+best_j]);
+				best_count);
 
 		free(cliques);
 
