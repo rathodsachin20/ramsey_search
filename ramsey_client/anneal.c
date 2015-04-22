@@ -203,6 +203,33 @@ int CliqueCount(int *g,
     return(count);
 }
 
+/*
+PaleyGraph as starting point
+*/
+int* PaleyGraph(){
+	int gsize = 101;
+	int *g = (int * )malloc(gsize * gsize * sizeof(int));
+	memset(g, 0, gsize * gsize);
+
+	for(int i=0; i<gsize; i++){
+		for(int k= 1; k< (gsize)/ 2; k++)
+		{
+			int v1 = i;
+			int v2 = ( i + k*k ) % gsize;
+			if(v1 > v2)
+			{
+				int j = v1;
+				v1 = v2; 
+				v2 = j;
+			}
+			g[v1*gsize + v2] = 1;
+		}
+	}
+
+	return g;
+
+}
+
 
 /*
  * prints in the right format for the read routine
@@ -270,13 +297,10 @@ int main(int argc,char *argv[])
 	int t=INITEM;
 	
 	/*
-	 * start with graph of size 8
+	 * Starting with Paley size 101
 	 */
-	gsize = 8;
-	g = (int *)malloc(gsize*gsize*sizeof(int));
-	if(g == NULL) {
-		exit(1);
-	}
+	gsize = 101;
+	g = PaleyGraph();
 
 	/*
 	 * make a fifo to use as the taboo list
@@ -288,7 +312,7 @@ int main(int argc,char *argv[])
 
 	/*
 	 * start out with all zeros
-	 */
+	 
 	memset(g,0,gsize*gsize*sizeof(int));
 	val = 0, iter = 0, jter=0;
 	for( iter=0; iter<gsize; iter++){
@@ -298,6 +322,7 @@ int main(int argc,char *argv[])
 		}
 	}
 	PrintGraph(g, gsize);
+    */
 
 	int best_clique = INITEM;
 	int flag = 0;
@@ -305,7 +330,7 @@ int main(int argc,char *argv[])
 	/*
 	 * while we do not have a publishable result
 	 */
-	while(gsize < 102)
+	while(gsize < 200)
 	{
 		/*
 		 * find out how we are doing
