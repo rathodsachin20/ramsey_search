@@ -20,6 +20,9 @@ anneal: anneal.c $(INCL) ${BOBJ}
 random: simple_taboo_search-random.c $(INCL) ${BOBJ}
 	$(COMPILE) ${INCLUDES} -o simple_taboo_search-random simple_taboo_search-random.c $(BOBJ) $(LIBS)
 
+multi_flip: ramsey_multi_flip.c  $(INCL) ${BOBJ}
+	$(COMPILE) ${INCLUDES} -o ramsey_multi_flip ramsey_multi_flip.c $(BOBJ) $(LIBS)
+
 simple_taboo_search: simple_taboo_search.c $(INCL) ${BOBJ}
 	$(COMPILE) ${INCLUDES} -o simple_taboo_search simple_taboo_search.c $(BOBJ) $(LIBS)
 
