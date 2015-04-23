@@ -11,7 +11,11 @@
 
 #define TABOOSIZE (500)
 #define BIGCOUNT (9999999)
+#define HIGH_TEMP (999999)
+#define THRESHOLD (500000) // Perhaps try double flip
+#define INIT (0)
 
+int init_temp = 0;
 /***
  *** example of very simple search for R(7,7) counter examples
  ***
@@ -161,41 +165,20 @@ int CliqueCount(int *g,
     return(count);
 }
 
-int getRandomJ(int gsize) {
-
-	int k = 0;
-	srand(time(NULL));
-	return(rand() % (gsize - 1));
-
-}
 
 
-int* PaleyGraph(gsize){
-	int i, k;
-        int *g = (int * )malloc(gsize * gsize * sizeof(int));
-        memset(g, 0, gsize * gsize);
-
-        for(i=0; i<gsize; i++){
-                for(k= 1; k< (gsize)/ 2; k++)
-                {
-                        int v1 = i;
-                        int v2 = ( i + k*k ) % gsize;
-                        if(v1 > v2)
-                        {
-                                int j = v1;
-                                v1 = v2;
-                                v2 = j;
-                        }
-                        g[v1*gsize + v2] = 1;
-                }
+int *RandomGraphGenerator(int n)
+{
+        int *g = (int*)malloc(n*n*sizeof(int));
+        int i=0,j=0;
+        srand(time(NULL));
+        for(i=0;i<n;i++)
+        {
+                for(j=i+1;j<n;j++)
+                        g[i*n+j] = rand()%2;
         }
-
         return g;
-
 }
-
-
-
 
 
 int
@@ -210,50 +193,37 @@ main(int argc,char *argv[])
 	int best_count;
 	int best_i;
 	int best_j;
-	int best_k;
 	void *taboo_list;
 	int val,iter,jter;
 	/*
 	 * start with graph of size 8
 	 */
+	gsize = 8;
+	g = (int *)malloc(gsize*gsize*sizeof(int));
+	if(g == NULL) {
+		exit(1);
+	}
 
-	if (argc < 2) {
-		gsize = 8;
-		g = (int *)malloc(gsize*gsize*sizeof(int));
-		if(g == NULL) {
-			exit(1);
-		}
+	/*
+	 * make a fifo to use as the taboo list
+	 */
+	taboo_list = FIFOInitEdge(TABOOSIZE);
+	if(taboo_list == NULL) {
+		exit(1);
+	}
 
 	/*
 	 * start out with all zeros
 	 */
-		memset(g,0,gsize*gsize*sizeof(int));
-		val = 0, iter = 0, jter=0;
-		for( iter=0; iter<gsize; iter++){
-			for( jter = 0; jter< gsize; jter++){
-				g[iter*gsize + jter]  = val;
-				val = 1 - val; 
-			}
+	memset(g,0,gsize*gsize*sizeof(int));
+	 val = 0, iter = 0, jter=0;
+	for( iter=0; iter<gsize; iter++){
+		for( jter = 0; jter< gsize; jter++){
+			g[iter*gsize + jter]  = val;
+			val = 1 - val; 
 		}
-		PrintGraph(g, gsize);
-
-	} else {
-
-		gsize = atoi(argv[1]);
-		g = (int *)malloc(gsize*gsize*sizeof(int));
-		if(g == NULL) {
-			exit(1);
-        	}
-		g = PaleyGraph(gsize);
 	}
-	/*
-	 *make a fifo to use as the taboo list
-	 */
-        taboo_list = FIFOInitEdge(TABOOSIZE);
-        if(taboo_list == NULL) {
-                exit(1);
-        }
-
+	PrintGraph(g, gsize);
 
 	/*
 	 * while we do not have a publishable result
@@ -335,35 +305,27 @@ main(int argc,char *argv[])
 			for(j=i+1; j < gsize; j++)
 			{
 				/*
-				 * flip two edges (i,j), (i,random(j) + 1) 
+				 * flip it
 				 */
-				int k = getRandomJ(gsize);
 				g[i*gsize+j] = 1 - g[i*gsize+j];
-				if (k == j)
-					k = j + 1;
-				g[i*gsize + k] = 1 - g[i*gsize + k];
 				count = CliqueCount(g,gsize);
 
 				/*
 				 * is it better and the i,j,count not taboo?
 				 */
 				if((count < best_count) && 
-//					!FIFOFindEdge(taboo_list,i,j))
-					!FIFOFindEdgeCount(taboo_list,i,j,count) &&
-					!FIFOFindEdgeCount(taboo_list,i,k, count))
+					!FIFOFindEdge(taboo_list,i,j))
+//					!FIFOFindEdgeCount(taboo_list,i,j,count))
 				{
-					/* no need to store j + 1 */
 					best_count = count;
 					best_i = i;
 					best_j = j;
-					best_k = k;
 				}
 
 				/*
 				 * flip it back
 				 */
 				g[i*gsize+j] = 1 - g[i*gsize+j];
-				g[i*gsize+k] = 1 - g[i*gsize+k];
 			}
 		}
 
@@ -376,26 +338,28 @@ main(int argc,char *argv[])
 		 * keep the best flip we saw
 		 */
 		g[best_i*gsize+best_j] = 1 - g[best_i*gsize+best_j];
-		g[best_i*gsize + best_k] = 1 - g[best_i*gsize + best_j];
 
 		/*
 		 * taboo this graph configuration so that we don't visit
 		 * it again
 		 */
 		count = CliqueCount(g,gsize);
-//		FIFOInsertEdge(taboo_list,best_i,best_j);
-		FIFOInsertEdgeCount(taboo_list,best_i,best_j,count);
-		FIFOInsertEdgeCount(taboo_list,best_i,best_k,count);
+		FIFOInsertEdge(taboo_list,best_i,best_j);
+//		FIFOInsertEdgeCount(taboo_list,best_i,best_j,count);
+		init_temp++;
+		/* Break out of local minimum if hit */
+		if (init_temp >= THRESHOLD ) {
+			g = RandomGraphGenerator(gsize);
+			init_temp = 0;
 
-		printf("ce size: %d, best_count: %d, best edges: (%d,%d) (%d,%d), new colors: %d %d\n",
+		}
+			
+		printf("ce size: %d, best_count: %d, best edge: (%d,%d), new color: %d\n",
 			gsize,
 			best_count,
 			best_i,
 			best_j,
-			best_i,
-			best_k,
-			g[best_i*gsize+best_j],
-			g[best_i*gsize+best_k]);
+			g[best_i*gsize+best_j]);
 
 		/*
 		 * rinse and repeat

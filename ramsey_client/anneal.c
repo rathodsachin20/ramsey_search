@@ -207,12 +207,13 @@ int CliqueCount(int *g,
 PaleyGraph as starting point
 */
 int* PaleyGraph(){
-	int gsize = 101;
+	int gsize = 157;
+	int i, k;
 	int *g = (int * )malloc(gsize * gsize * sizeof(int));
 	memset(g, 0, gsize * gsize);
 
-	for(int i=0; i<gsize; i++){
-		for(int k= 1; k< (gsize)/ 2; k++)
+	for( i=0; i<gsize; i++){
+		for( k= 1; k< (gsize)/ 2; k++)
 		{
 			int v1 = i;
 			int v2 = ( i + k*k ) % gsize;
@@ -299,7 +300,7 @@ int main(int argc,char *argv[])
 	/*
 	 * Starting with Paley size 101
 	 */
-	gsize = 101;
+	gsize = 157;
 	g = PaleyGraph();
 
 	/*
