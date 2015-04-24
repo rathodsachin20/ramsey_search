@@ -1,4 +1,5 @@
 from random import random, randint
+import ramsey
 
 def individual(length, low, high):
     return [randint(low, high) for i in xrange(length)]
