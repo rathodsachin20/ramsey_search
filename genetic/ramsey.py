@@ -1,4 +1,5 @@
 import numpy as np
+from random import random, randint
 
 
 def clique_count(a):
@@ -25,9 +26,12 @@ def clique_count(a):
 
 
 def get_nparr(dim):
-    l = [0]*dim*dim
-    ar = np.asarray[l]
-    ar = np.reshape(dim, dim)
+    #l = [0]*dim*dim
+    l = []
+    for i in xrange(dim*dim):
+        l.append(randint(0,1))
+    ar = np.asarray(l)
+    ar = ar.reshape(dim, dim)
     return ar
 
 
