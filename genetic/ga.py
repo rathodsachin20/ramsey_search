@@ -26,19 +26,28 @@ def grade(population, target, graded_list=None):
     #total = sum([fitness(i, target) for i in population])
     #return total/(len(population)*1.0)
 
-def crossover(male, female, i_pos, j_pos):
+def crossover(male, female, male_i, female_i, total):
     dim = len(male)
-    if i_pos > j_pos:
-        temp = i_pos
-        i_pos = j_pos
-        j_pos = temp
+    mscore = 1.0*(total-male_i)
+    fscore = 1.0*(total-female_i)
+    mprob = mscore/(mscore+fscore)
+    total = dim*(dim-1)/2
+    melem = int(total*mprob)
+    #i_pos = int(mprob*dim)
+    #j_pos = int(mprob*dim)
+    #if i_pos > j_pos:
+    #    temp = i_pos
+    #    i_pos = j_pos
+    #    j_pos = temp
     l = np.zeros((dim, dim), dtype=int)
+    count = 0
     for i in xrange(dim):
-        for j in xrange(dim):
-            if i<i_pos and j<j_pos:
+        for j in range(i+1, dim):
+            if count<melem:
                 l[i][j] = male[i][j]
             else:
                 l[i][j] = female[i][j]
+            count += 1
     return l
     
 
@@ -78,26 +87,23 @@ def evolve(pop, target=0, retain=0.2, random_select=0.05, mutate=0.1):
     children = []
 
     while len(children)<num_children:
-        male = randint(0, num_parents-1)
-        female = randint(0, num_parents-1)
-        if male != female:
-            male = parents[male]
-            female = parents[female]
-            dim = len(male)
+        male_i = randint(0, num_parents-1)
+        female_i = randint(0, num_parents-1)
+        if male_i != female_i:
+            male = parents[male_i]
+            female = parents[female_i]
             #half = int(len(male)/2)
-            i_pos = int(dim/2)
-            j_pos = int(dim/2)
             #i_pos = random(0, len(indiv)-1)
             #j_pos = random(0, len(indiv)-1)
             # try with random breakpoint
-            child = crossover(male, female, i_pos, j_pos)
+            child = crossover(male, female, male_i, female_i, len(parents))
             children.append(child)
 
     parents.extend(children)
     return (parents, num_zeros)
 
 
-def ramsey_ga_onegen(pop_in, dim, pop_count, generations):
+def ramsey_ga_onegen(pop_in, dim, pop_count, generations, target_count):
     #a = get_nparr(dim)
     target = 0
     p = population(pop_count, dim, pop_in)
@@ -107,7 +113,7 @@ def ramsey_ga_onegen(pop_in, dim, pop_count, generations):
         (p, zero_count) = evolve(p, target)
         #gr = grade(p, target)
         print "dim:", dim, "  poulation #counter-examples:", zero_count
-        if zero_count>=10:
+        if zero_count>=target_count:
             break
         #fitness_history.append(gr)
 
@@ -121,7 +127,7 @@ def ramsey_ga(start_dim, end_dim, pop_count, generations):
     pop_cur = pop_start
     for dim in range(start_dim, end_dim+1):
         print "Evolving Generation of dimension:", dim
-        pop_old = ramsey_ga_onegen(pop_cur, dim, pop_count, generations)
+        pop_old = ramsey_ga_onegen(pop_cur, dim, pop_count, generations, 1)
         #pop_new = np.zeros((dim+1,dim+1), dtype=int)
         pop_new = []
         for indiv in pop_old:
