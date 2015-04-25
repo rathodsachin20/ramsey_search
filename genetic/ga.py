@@ -1,5 +1,7 @@
-from random import random, randint
+from random import random, randint, expovariate
 from ramsey import *
+
+np.set_printoptions(threshold=np.nan)
 
 def individual(dim):
     return get_nparr(dim)
@@ -17,6 +19,11 @@ def fitness(individual, target):
         #print "Found counter-example of size:", len(individual)
         if(len(individual))>50:
             print individual
+            try:
+                with open('counters', 'a') as f:
+                    f.write("\ncounter-example of size:"+str(len(individual))+":\n"+str(individual))
+            except Exception as ex:
+                print "Error while writing:", ex
     return abs(score - target)
 
 def grade(population, target, graded_list=None):
@@ -30,6 +37,8 @@ def crossover(male, female, male_i, female_i, total):
     dim = len(male)
     mscore = 1.0*(total-male_i)
     fscore = 1.0*(total-female_i)
+    mscore *= mscore
+    fscore *= fscore
     mprob = mscore/(mscore+fscore)
     total = dim*(dim-1)/2
     melem = int(total*mprob)
@@ -87,8 +96,11 @@ def evolve(pop, target=0, retain=0.2, random_select=0.05, mutate=0.1):
     children = []
 
     while len(children)<num_children:
-        male_i = randint(0, num_parents-1)
-        female_i = randint(0, num_parents-1)
+        #male_i = randint(0, num_parents-1)
+        #female_i = randint(0, num_parents-1)
+        lambd = 0.04  # or ~0.05
+        male_i = int(expovariate(lambd))%num_parents
+        female_i  = int(expovariate(lambd))%num_parents
         if male_i != female_i:
             male = parents[male_i]
             female = parents[female_i]
@@ -155,8 +167,8 @@ if __name__ == "__main__":
 
     #for line in fitness_history:
     #    print line
-    start = 20
+    start = 8
     stop = 70
     pop = 100
-    gen = 100
+    gen = 150
     ramsey_ga(start, stop, pop, gen)
