@@ -8,6 +8,7 @@
 #include <time.h>
 #include "fifo.h"	/* for taboo list */
 #include "graph_utils.h"
+#include "connect.h"
 
 #define sgsize 7
 #define MAXSIZE (541)
@@ -20,104 +21,104 @@
 
 int CliqueCount_D(int *g, int gsize, int i, int j, int flip) 
 {
-    int k;
-    int l;
-    int m;
-    int n;
-    int o;
-    int count=0;
-    int color = g[i*gsize+j];
-	
-    if(flip)
-    	color = 1 - color;
-    
-    for(k=0;k < gsize-sgsize+3; k++) 
-    { 
-    	if(k==i || k==j) continue;
-    	
-    	int k_array[2];
-    	if(i<k) k_array[0]=i*gsize+k;
-    	else 	k_array[0]=k*gsize+i;
-    	if(j<k) k_array[1]=j*gsize+k;
-    	else 	k_array[1]=k*gsize+j;
+	int k;
+	int l;
+	int m;
+	int n;
+	int o;
+	int count=0;
+	int color = g[i*gsize+j];
+
+	if(flip)
+		color = 1 - color;
+
+	for(k=0;k < gsize-sgsize+3; k++) 
+	{ 
+		if(k==i || k==j) continue;
+
+		int k_array[2];
+		if(i<k) k_array[0]=i*gsize+k;
+		else 	k_array[0]=k*gsize+i;
+		if(j<k) k_array[1]=j*gsize+k;
+		else 	k_array[1]=k*gsize+j;
 
 		if((color == g[k_array[0]]) && 
-		   (color == g[k_array[1]]))
+				(color == g[k_array[1]]))
 		{
-		    for(l=k+1;l < gsize-sgsize+4; l++) 
-		    {
-		    	if(l==i || l==j) continue;
+			for(l=k+1;l < gsize-sgsize+4; l++) 
+			{
+				if(l==i || l==j) continue;
 
-		    	int l_array[2];
-		    	if(i<l) l_array[0]=i*gsize+l;
-		    	else	l_array[0]=l*gsize+i;
-		    	if(j<l) l_array[1]=j*gsize+l;
-		    	else	l_array[1]=l*gsize+j;
+				int l_array[2];
+				if(i<l) l_array[0]=i*gsize+l;
+				else	l_array[0]=l*gsize+i;
+				if(j<l) l_array[1]=j*gsize+l;
+				else	l_array[1]=l*gsize+j;
 
 				if((color == g[l_array[0]]) && 
-				   (color == g[l_array[1]]) && 
-				   (color == g[k*gsize+l]))
+						(color == g[l_array[1]]) && 
+						(color == g[k*gsize+l]))
 				{
-				    for(m=l+1;m < gsize-sgsize+5; m++) 
-				    {
-				    	if(m==i || m==j) continue;
+					for(m=l+1;m < gsize-sgsize+5; m++) 
+					{
+						if(m==i || m==j) continue;
 
-				    	int m_array[2];
-				    	if(i<m) m_array[0]=i*gsize+m;
-				    	else	m_array[0]=m*gsize+i;
-				    	if(j<m) m_array[1]=j*gsize+m;
-				    	else	m_array[1]=m*gsize+j;
+						int m_array[2];
+						if(i<m) m_array[0]=i*gsize+m;
+						else	m_array[0]=m*gsize+i;
+						if(j<m) m_array[1]=j*gsize+m;
+						else	m_array[1]=m*gsize+j;
 
 
 						if((color == g[m_array[0]]) && 
-						   (color == g[m_array[1]]) &&
-						   (color == g[k*gsize+m]) && 
-						   (color == g[l*gsize+m]))
+								(color == g[m_array[1]]) &&
+								(color == g[k*gsize+m]) && 
+								(color == g[l*gsize+m]))
 						{
-						  for(n=m+1;n<gsize-sgsize+6;n++)
+							for(n=m+1;n<gsize-sgsize+6;n++)
 							{
 								if(n==i || n==j) continue;
 
 								int n_array[2];
-				    			if(i<n) n_array[0]=i*gsize+n;
-				    			else	n_array[0]=n*gsize+i;
-				    			if(j<n) n_array[1]=j*gsize+n;
-				    			else	n_array[1]=n*gsize+j;
+								if(i<n) n_array[0]=i*gsize+n;
+								else	n_array[0]=n*gsize+i;
+								if(j<n) n_array[1]=j*gsize+n;
+								else	n_array[1]=n*gsize+j;
 
-							  if((color == g[n_array[0]]) && 
-							   (color == g[n_array[1]]) &&
-							   (color == g[k*gsize+n]) && 
-							   (color == g[l*gsize+n]) &&
-							   (color == g[m*gsize+n]))
-							    {
-							      	for(o=n+1;o<gsize-sgsize+7;o++)
-							      		{
-							      			if(o==i || o==j) continue;
-											int o_array[2];
-								    		
-								    		if(i<o) o_array[0]=i*gsize+o;
-								    		else	o_array[0]=o*gsize+i;
-								    		
-								    		if(j<n) o_array[1]=j*gsize+o;
-								    		else	o_array[1]=o*gsize+j;
-							      			if( (color == g[o_array[0]]) && 
-											    (color == g[o_array[1]]) &&
-											    (color == g[k*gsize+o]) && 
-											    (color == g[l*gsize+o]) &&
-											    (color == g[m*gsize+o]) &&
-											    (color == g[n*gsize+o]))
-											   	 {count++;}
-							    		} 		
+								if((color == g[n_array[0]]) && 
+										(color == g[n_array[1]]) &&
+										(color == g[k*gsize+n]) && 
+										(color == g[l*gsize+n]) &&
+										(color == g[m*gsize+n]))
+								{
+									for(o=n+1;o<gsize-sgsize+7;o++)
+									{
+										if(o==i || o==j) continue;
+										int o_array[2];
+
+										if(i<o) o_array[0]=i*gsize+o;
+										else	o_array[0]=o*gsize+i;
+
+										if(j<n) o_array[1]=j*gsize+o;
+										else	o_array[1]=o*gsize+j;
+										if( (color == g[o_array[0]]) && 
+												(color == g[o_array[1]]) &&
+												(color == g[k*gsize+o]) && 
+												(color == g[l*gsize+o]) &&
+												(color == g[m*gsize+o]) &&
+												(color == g[n*gsize+o]))
+										{count++;}
+									} 		
 								} 
 							}
 
 						}
-				    }
+					}
 				}
-		    }
+			}
 		}
-    }
-return(count);
+	}
+	return(count);
 }
 
 /*
@@ -130,84 +131,83 @@ return(count);
  */
 
 int CliqueCount(int *g,
-	     int gsize)
+		int gsize)
 {
-    int i;
-    int j;
-    int k;
-    int l;
-    int m;
-    int n;
-    int o;
-    int count=0;
+	int i;
+	int j;
+	int k;
+	int l;
+	int m;
+	int n;
+	int o;
+	int count=0;
 
-    for(i=0;i < gsize-sgsize+1; i++)
-    {
-	for(j=i+1;j < gsize-sgsize+2; j++)
-        {
-	    for(k=j+1;k < gsize-sgsize+3; k++) 
-            { 
-		if((g[i*gsize+j] == g[i*gsize+k]) && 
-		   (g[i*gsize+j] == g[j*gsize+k]))
+	for(i=0;i < gsize-sgsize+1; i++)
+	{
+		for(j=i+1;j < gsize-sgsize+2; j++)
 		{
-		    for(l=k+1;l < gsize-sgsize+4; l++) 
-		    { 
-			if((g[i*gsize+j] == g[i*gsize+l]) && 
-			   (g[i*gsize+j] == g[j*gsize+l]) && 
-			   (g[i*gsize+j] == g[k*gsize+l]))
-			{
-			    for(m=l+1;m < gsize-sgsize+5; m++) 
-			    {
-				if((g[i*gsize+j] == g[i*gsize+m]) && 
-				   (g[i*gsize+j] == g[j*gsize+m]) &&
-				   (g[i*gsize+j] == g[k*gsize+m]) && 
-				   (g[i*gsize+j] == g[l*gsize+m])) {
-					for(n=m+1; n < gsize-sgsize+6; n++)
-					{
-						if((g[i*gsize+j]
-							== g[i*gsize+n]) &&
-						   (g[i*gsize+j] 
-							== g[j*gsize+n]) &&
-						   (g[i*gsize+j] 
-							== g[k*gsize+n]) &&
-						   (g[i*gsize+j] 
-							== g[l*gsize+n]) &&
-						   (g[i*gsize+j] 
-							== g[m*gsize+n])) {
-					for(o=n+1; o < gsize-sgsize+7; o++) {
-						if((g[i*gsize+j]
-							== g[i*gsize+o]) &&
-						   (g[i*gsize+j] 
-							== g[j*gsize+o]) &&
-						   (g[i*gsize+j] 
-							== g[k*gsize+o]) &&
-						   (g[i*gsize+j] 
-							== g[l*gsize+o]) &&
-						   (g[i*gsize+j] 
-							== g[m*gsize+o]) &&
-						   (g[i*gsize+j] == 
-							   g[n*gsize+o])) {
-			      					count++;
-						   }
-					}
+			for(k=j+1;k < gsize-sgsize+3; k++) 
+			{ 
+				if((g[i*gsize+j] == g[i*gsize+k]) && 
+						(g[i*gsize+j] == g[j*gsize+k]))
+				{
+					for(l=k+1;l < gsize-sgsize+4; l++) 
+					{ 
+						if((g[i*gsize+j] == g[i*gsize+l]) && 
+								(g[i*gsize+j] == g[j*gsize+l]) && 
+								(g[i*gsize+j] == g[k*gsize+l]))
+						{
+							for(m=l+1;m < gsize-sgsize+5; m++) 
+							{
+								if((g[i*gsize+j] == g[i*gsize+m]) && 
+										(g[i*gsize+j] == g[j*gsize+m]) &&
+										(g[i*gsize+j] == g[k*gsize+m]) && 
+										(g[i*gsize+j] == g[l*gsize+m])) {
+									for(n=m+1; n < gsize-sgsize+6; n++)
+									{
+										if((g[i*gsize+j]
+													== g[i*gsize+n]) &&
+												(g[i*gsize+j] 
+												 == g[j*gsize+n]) &&
+												(g[i*gsize+j] 
+												 == g[k*gsize+n]) &&
+												(g[i*gsize+j] 
+												 == g[l*gsize+n]) &&
+												(g[i*gsize+j] 
+												 == g[m*gsize+n])) {
+											for(o=n+1; o < gsize-sgsize+7; o++) {
+												if((g[i*gsize+j]
+															== g[i*gsize+o]) &&
+														(g[i*gsize+j] 
+														 == g[j*gsize+o]) &&
+														(g[i*gsize+j] 
+														 == g[k*gsize+o]) &&
+														(g[i*gsize+j] 
+														 == g[l*gsize+o]) &&
+														(g[i*gsize+j] 
+														 == g[m*gsize+o]) &&
+														(g[i*gsize+j] == 
+														 g[n*gsize+o])) {
+													count++;
+												}
+											}
+										}
+									}
+								}
+							}
 						}
 					}
 				}
-			    }
 			}
-		    }
 		}
-	    }
-         }
-     }
-    return(count);
+	}
+	return(count);
 }
 
 /*
-PaleyGraph as starting point
-*/
-int* PaleyGraph(){
-	int gsize = 157;
+   PaleyGraph as starting point
+ */
+int* PaleyGraph(int gsize){
 	int i, k;
 	int *g = (int * )malloc(gsize * gsize * sizeof(int));
 	memset(g, 0, gsize * gsize);
@@ -296,12 +296,13 @@ int main(int argc,char *argv[])
 	int val,iter,jter;
 	int gt[2];
 	int t=INITEM;
-	
+
+	int sock = open_socket("169.231.19.110");
 	/*
 	 * Starting with Paley size 101
 	 */
-	gsize = 157;
-	g = PaleyGraph();
+	gsize = 101;
+	g = PaleyGraph(101);
 
 	/*
 	 * make a fifo to use as the taboo list
@@ -313,17 +314,17 @@ int main(int argc,char *argv[])
 
 	/*
 	 * start out with all zeros
-	 
-	memset(g,0,gsize*gsize*sizeof(int));
-	val = 0, iter = 0, jter=0;
-	for( iter=0; iter<gsize; iter++){
-		for( jter = 0; jter< gsize; jter++){
-			g[iter*gsize + jter]  = val;
-			val = 1 - val; 
-		}
-	}
-	PrintGraph(g, gsize);
-    */
+
+	 memset(g,0,gsize*gsize*sizeof(int));
+	 val = 0, iter = 0, jter=0;
+	 for( iter=0; iter<gsize; iter++){
+	 for( jter = 0; jter< gsize; jter++){
+	 g[iter*gsize + jter]  = val;
+	 val = 1 - val; 
+	 }
+	 }
+	 PrintGraph(g, gsize);
+	 */
 
 	int best_clique = INITEM;
 	int flag = 0;
@@ -333,6 +334,8 @@ int main(int argc,char *argv[])
 	 */
 	while(gsize < 200)
 	{
+
+		printf("Graph size is %d\n", gsize);
 		/*
 		 * find out how we are doing
 		 */
@@ -345,6 +348,7 @@ int main(int argc,char *argv[])
 		if(count == 0)
 		{
 			printf("Eureka!  Counter-example found!\n");
+			socket_upload(sock, g, gsize);	
 			PrintGraph(g,gsize);
 			/*
 			 * make a new graph one size bigger
@@ -403,15 +407,14 @@ int main(int argc,char *argv[])
 		 * only need to work with upper triangle of matrix =>
 		 * notice the indices
 		 */
-		printf("Making a choice 0 \n");
 		best_clique = INICLI;		
-		
-        time_t tim;
-        srand((unsigned) time(&tim));
 
-        // Introducing randomization into system
-    	int choice = rand() % 10;
-    	printf("choice: %d \n", choice);
+		time_t tim;
+		srand((unsigned) time(&tim));
+
+		// Introducing randomization into system
+		int choice = rand() % 10;
+		printf("choice: %d \n", choice);
 		if (choice == 0){
 			i=rand()%gsize;
 			j=rand()%gsize;
@@ -429,7 +432,7 @@ int main(int argc,char *argv[])
 			g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];
 		}
 		else{
-			
+
 			for(i=0; i < gsize; i++)
 			{
 				for(j=i+1; j < gsize; j++)
@@ -437,10 +440,10 @@ int main(int argc,char *argv[])
 					if(!FIFOFindEdge(taboo_list,i,j)){
 						// Clique Count without flip
 						int old_clique = CliqueCount_D(g,gsize,i,j, 0);
-						
+
 						// Clique Count with flip
 						int new_clique = CliqueCount_D(g,gsize,i,j, 1);
-						
+
 						// Improvement with flip
 						cliques[i*gsize+j] = count + new_clique - old_clique;
 
@@ -455,7 +458,7 @@ int main(int argc,char *argv[])
 				{
 					if(!FIFOFindEdge(taboo_list,i,j) )
 					{
-					 	if(cliques[i*gsize+j] < best_clique )
+						if(cliques[i*gsize+j] < best_clique )
 						{
 							best_clique = cliques[i*gsize+j];
 							gt[0] = i;
@@ -482,12 +485,10 @@ int main(int argc,char *argv[])
 		FIFOInsertEdge(taboo_list,gt[0],gt[1]);
 		t-=DTEM;	
 		if (t==0){
-				t=INITEM;
+			t=INITEM;
 		}
 
-		printf("size: %d, best_count: %d",
-				gsize,
-				best_count);
+		printf("size: %d, temperature: %d, count: %d, best_clique: %d\n", gsize,t, count, best_clique);
 
 		free(cliques);
 

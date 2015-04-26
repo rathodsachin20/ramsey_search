@@ -4,10 +4,10 @@ INCLUDES = -I$(TOP)
 CFLAGS = -g -O2
 COMPILE = $(CC) $(INCLUDES) $(CFLAGS)
 
-INCL=./graph_utils.h ./jrb.h ./jval.h ./dllist.h ./fifo.h
+INCL=./graph_utils.h ./jrb.h ./jval.h ./dllist.h ./fifo.h ./connect.h
 COMMON=.
 PRED=.
-BOBJ= $(COMMON)/jval.o $(COMMON)/jrb.o $(COMMON)/dllist.o $(COMMON)/fifo.o
+BOBJ= $(COMMON)/jval.o $(COMMON)/jrb.o $(COMMON)/dllist.o $(COMMON)/fifo.o $(COMMON)/connect.o
 LIBS= -lm 
 
 PROGRAMS = simple_taboo_search simple_taboo_search-7 test_clique_count
@@ -53,6 +53,9 @@ graph_utils.o: graph_utils.c graph_utils.h
 
 clique_count.o: clique_count.c clique_count.h
 	$(COMPILE) ${INCLUDES} -c clique_count.c
+
+connect.o: connect.c connect.h
+	$(COMPILE) ${INCLUDES} -c connect.c
 
 clean:
 	rm -f *.o core
