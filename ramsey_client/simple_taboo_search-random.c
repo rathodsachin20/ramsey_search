@@ -177,7 +177,7 @@ int open_socket(){
 	}
 	puts("Socket created");
 
-	server.sin_addr.s_addr = inet_addr("169.231.18.197");
+	server.sin_addr.s_addr = inet_addr("169.231.19.110");
 	server.sin_family = AF_INET;
 	server.sin_port = htons( 8888 );
 
@@ -192,7 +192,9 @@ int open_socket(){
 
 void socket_upload(int sock, int *g,int gsize)
 {
-	int *gCopy = (int*)malloc(gsize*gsize*sizeof(int));
+	if( write(sock, &gsize, sizeof(gsize) ) < 0 ) 
+		error("ERROR writing to socket");
+	/*int *gCopy = (int*)malloc(gsize*gsize*sizeof(int));
 	memcpy(gCopy,g,gsize*gsize*sizeof(int));
 	struct sockaddr_in sockInfo;
 	char *toSend = (char*)malloc(255+(gsize*gsize+3)*sizeof(char));
@@ -224,7 +226,7 @@ void socket_upload(int sock, int *g,int gsize)
 	}
 	printf("sent.\n");
 	free(gCopy);
-	free(toSend);
+	free(toSend);*/
 }
 
 int main(int argc,char *argv[])
@@ -290,7 +292,7 @@ int main(int argc,char *argv[])
 		{
 			printf("Eureka!  Counter-example found!\n");
 			PrintGraph(g,gsize);
-			socket_upload(sock, g, gsize);	
+			//socket_upload(sock, g, gsize);	
 			/*
 			 * make a new graph one size bigger
 			 */
