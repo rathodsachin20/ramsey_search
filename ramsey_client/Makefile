@@ -1,7 +1,7 @@
-CC = gcc
+CC = gcc -O2
 TOP = .
 INCLUDES = -I$(TOP)
-CFLAGS = -g -O2
+CFLAGS = -g
 COMPILE = $(CC) $(INCLUDES) $(CFLAGS)
 
 INCL=./graph_utils.h ./jrb.h ./jval.h ./dllist.h ./fifo.h ./connect.h
@@ -10,7 +10,7 @@ PRED=.
 BOBJ= $(COMMON)/jval.o $(COMMON)/jrb.o $(COMMON)/dllist.o $(COMMON)/fifo.o $(COMMON)/connect.o
 LIBS= -lm 
 
-PROGRAMS = simple_taboo_search simple_taboo_search-7 test_clique_count
+PROGRAMS = simple_taboo_search simple_taboo_search-7 test_clique_count anneal random multi_flip hybrid_search
 
 all: $(PROGRAMS)
 

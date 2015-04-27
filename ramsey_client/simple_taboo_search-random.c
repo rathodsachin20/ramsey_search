@@ -10,7 +10,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <fcntl.h>
-
+#include "connect.h"
 #define MAXSIZE (541)
 
 #define TABOOSIZE (500)
@@ -165,6 +165,7 @@ int CliqueCount(int *g,
 	return(count);
 }
 
+#if 0
 int open_socket(){
 	int sock;
 	struct sockaddr_in server;
@@ -228,6 +229,7 @@ void socket_upload(int sock, int *g,int gsize)
 	free(gCopy);
 	free(toSend);*/
 }
+#endif
 
 int main(int argc,char *argv[])
 {

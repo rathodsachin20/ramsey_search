@@ -162,6 +162,8 @@ int *RandomGraphGenerator(int n)
 	return g;
 }	
 
+
+#if 0
 /*
  ***
  *** returns the number of monochromatic cliques in the graph presented to
@@ -350,3 +352,4 @@ int CliqueCount_D(int *g, int gsize, int i, int j, int flip)
     
 return(count);
 }
+#endif
