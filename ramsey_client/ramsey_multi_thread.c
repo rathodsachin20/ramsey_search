@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-
+#include <pthread.h>
 #include "fifo.h"	/* for taboo list */
 
 
@@ -194,25 +194,34 @@ int* PaleyGraph(gsize){
 
 }
 
+struct thread_args {
 
+	void *taboo_list;
+	int *g;
+	int gsize;
+};
 
+#define NumThreads 2
+pthread_mutex_t taboo_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t t2_wait = PTHREAD_COND_INITIALIZER;
 
+void *thread_search(void *args);
+void *thread_search2(void *args);
+int t1_count = 0;
+int t2_count = 0;
+int flag[205] = {0};
 
-int
-main(int argc,char *argv[])
+int main(int argc,char *argv[])
 {
 	int *g;
-	int *new_g;
 	int gsize;
 	int count;
 	int i;
 	int j;
-	int best_count;
-	int best_i;
-	int best_j;
-	int best_k;
 	void *taboo_list;
 	int val,iter,jter;
+	pthread_t *pthreads = (pthread_t *)malloc(sizeof(pthread_t)* NumThreads);
+	struct thread_args *args = (struct thread_args*) malloc(sizeof(struct thread_args));	
 	/*
 	 * start with graph of size 8
 	 */
@@ -253,8 +262,62 @@ main(int argc,char *argv[])
         if(taboo_list == NULL) {
                 exit(1);
         }
+	/* populate thread parameters */
+	args->g = g;
+	args->gsize = gsize;
+	args->taboo_list = taboo_list;
+
+	pthread_create( &pthreads[0], NULL, thread_search, (void *)args);
+	pthread_create( &pthreads[1], NULL, thread_search2, (void *)args);
 
 
+	
+	for (i = 0; i < NumThreads; i++) {
+		pthread_join(pthreads[i], NULL);
+	}
+	/* join threads here */
+	FIFODeleteGraph(taboo_list);
+	return(0);
+}
+
+void *thread_search(void *args) {
+
+	
+	struct thread_args *arg = (struct thread_args *)args;
+	int *new_g;
+	int *g = arg->g;
+	int gsize = arg->gsize;
+	int count;
+	int i;
+	int j;
+	int best_count;
+	int best_i;
+	int best_j;
+	int best_k;
+	void *taboo_list = arg->taboo_list;
+	int iter,jter,val;
+	printf("\n thread id is %u ", pthread_self());
+
+
+
+		gsize = 8;
+		g = (int *)malloc(gsize*gsize*sizeof(int));
+		if(g == NULL) {
+			exit(1);
+		}
+
+	/*
+	 * start out with all zeros
+	 */
+		memset(g,0,gsize*gsize*sizeof(int));
+		val = 0, iter = 0, jter=0;
+		for( iter=0; iter<gsize; iter++){
+			for( jter = 0; jter< gsize; jter++){
+				g[iter*gsize + jter]  = val;
+				val = 1 - val; 
+			}
+		}
+		PrintGraph(g, gsize);
 	/*
 	 * while we do not have a publishable result
 	 */
@@ -311,8 +374,15 @@ main(int argc,char *argv[])
 			/*
 			 * reset the taboo list for the new graph
 			 */
-			taboo_list = FIFOResetEdge(taboo_list);
-
+			pthread_mutex_lock(&taboo_lock);
+			while (flag[t2_count] == 0) {
+				printf("\n struck here \n");
+				pthread_cond_wait(&t2_wait, &taboo_lock);
+			}
+			t1_count++;
+		//	taboo_list = FIFOResetEdge(taboo_list);
+			pthread_mutex_unlock(&taboo_lock);
+			printf("\n __func %s", __func__);
 			/*
 			 * keep going
 			 */
@@ -384,10 +454,13 @@ main(int argc,char *argv[])
 		 */
 		count = CliqueCount(g,gsize);
 //		FIFOInsertEdge(taboo_list,best_i,best_j);
+
+		pthread_mutex_lock(&taboo_lock);
 		FIFOInsertEdgeCount(taboo_list,best_i,best_j,count);
 		FIFOInsertEdgeCount(taboo_list,best_i,best_k,count);
-
-		printf("ce size: %d, best_count: %d, best edges: (%d,%d) (%d,%d), new colors: %d %d\n",
+		pthread_mutex_unlock(&taboo_lock);
+		printf("pthread_id %u ce size: %d, best_count: %d, best edges: (%d,%d) (%d,%d), new colors: %d %d\n",
+			pthread_self(),
 			gsize,
 			best_count,
 			best_i,
@@ -401,10 +474,194 @@ main(int argc,char *argv[])
 		 * rinse and repeat
 		 */
 	}
+}
 
-	FIFODeleteGraph(taboo_list);
 
+void *thread_search2(void *args) {
 
-	return(0);
+	
+	struct thread_args *arg = (struct thread_args *)args;
+	int *new_g;
+	int *g;
+	int gsize = arg->gsize;
+	int count;
+	int i;
+	int j;
+	int best_count;
+	int best_i;
+	int best_j;
+	int best_k;
+	void *taboo_list = arg->taboo_list;
+	int val;
+	printf("\n thread id is %u ", pthread_self());
 
+		gsize = 8;
+		g = (int *)malloc(gsize*gsize*sizeof(int));
+		if(g == NULL) {
+			exit(1);
+		}
+
+	/*
+	 * start out with all zeros
+	 */
+		memset(g,0,gsize*gsize*sizeof(int));
+		val = 0, i = 0, j = 0;
+		for( i=0; i<gsize; i++){
+			for( j = 0; j< gsize; j++){
+				g[i*gsize + j]  = val;
+				val = 1 - val; 
+			}
+		}
+		PrintGraph(g, gsize);
+	/*
+	 * while we do not have a publishable result
+	 */
+	while(gsize < 206)
+	{
+		/*
+		 * find out how we are doing
+		 */
+		count = CliqueCount(g,gsize);
+
+		/*
+		 * if we have a counter example
+		 */
+		if(count == 0)
+		{
+			printf("Eureka!  Counter-example found!\n");
+			PrintGraph(g,gsize);
+			/*
+			 * make a new graph one size bigger
+			 */
+			new_g = (int *)malloc((gsize+1)*(gsize+1)*sizeof(int));
+			if(new_g == NULL)
+				exit(1);
+			/*
+			 * copy the old graph into the new graph leaving the
+			 * last row and last column alone
+			 */
+			CopyGraph(g,gsize,new_g,gsize+1);
+
+			/*
+			 * zero out the last column and last row
+			 */
+			for(i=0; i < (gsize+1); i++)
+			{
+				if(drand48() > 0.5) {
+					new_g[i*(gsize+1) + gsize] = 0; // last column
+					new_g[gsize*(gsize+1) + i] = 0; // last row
+				}
+				else
+				{
+					new_g[i*(gsize+1) + gsize] = 1; // last column
+					new_g[gsize*(gsize+1) + i] = 1; // last row
+				}
+			}
+
+			/*
+			 * throw away the old graph and make new one the
+			 * graph
+			 */
+			free(g);
+			g = new_g;
+			gsize = gsize+1;
+
+			/*
+			 * reset the taboo list for the new graph
+			 */
+			pthread_mutex_lock(&taboo_lock);
+			flag[t2_count++] = 1;
+			taboo_list = FIFOResetEdge(taboo_list);
+			pthread_cond_signal(&t2_wait);
+			pthread_mutex_unlock(&taboo_lock);
+			/*
+			 * keep going
+			 */
+			continue;
+		}
+
+		/*
+		 * otherwise, we need to consider flipping an edge
+		 *
+		 * let's speculative flip each edge, record the new count,
+		 * and unflip the edge.  We'll then remember the best flip and
+		 * keep it next time around
+		 *
+		 * only need to work with upper triangle of matrix =>
+		 * notice the indices
+		 */
+		best_count = BIGCOUNT;
+		for(i=0; i < gsize; i++)
+		{
+			for(j=i+1; j < gsize; j++)
+			{
+				/*
+				 * flip two edges (i,j), (i,random(j) + 1) 
+				 */
+				int k = getRandomJ(gsize);
+				g[i*gsize+j] = 1 - g[i*gsize+j];
+				if (k == j)
+					k = j + 1;
+				g[i*gsize + k] = 1 - g[i*gsize + k];
+				count = CliqueCount(g,gsize);
+
+				/*
+				 * is it better and the i,j,count not taboo?
+				 */
+				if((count < best_count) && 
+//					!FIFOFindEdge(taboo_list,i,j))
+					!FIFOFindEdgeCount(taboo_list,i,j,count) &&
+					!FIFOFindEdgeCount(taboo_list,i,k, count))
+				{
+					/* no need to store j + 1 */
+					best_count = count;
+					best_i = i;
+					best_j = j;
+					best_k = k;
+				}
+
+				/*
+				 * flip it back
+				 */
+				g[i*gsize+j] = 1 - g[i*gsize+j];
+				g[i*gsize+k] = 1 - g[i*gsize+k];
+			}
+		}
+
+		if(best_count == BIGCOUNT) {
+			printf("no best edge found, terminating\n");
+			exit(1);
+		}
+		
+		/*
+		 * keep the best flip we saw
+		 */
+		g[best_i*gsize+best_j] = 1 - g[best_i*gsize+best_j];
+		g[best_i*gsize + best_k] = 1 - g[best_i*gsize + best_k];
+
+		/*
+		 * taboo this graph configuration so that we don't visit
+		 * it again
+		 */
+		count = CliqueCount(g,gsize);
+//		FIFOInsertEdge(taboo_list,best_i,best_j);
+		pthread_mutex_lock(&taboo_lock);
+		FIFOInsertEdgeCount(taboo_list,best_i,best_j,count);
+		FIFOInsertEdgeCount(taboo_list,best_i,best_k,count);
+		pthread_mutex_unlock(&taboo_lock);
+		printf("pthread id %u ce size: %d, best_count: %d, best edges: (%d,%d) (%d,%d), new colors: %d %d\n",
+			pthread_self(),
+			gsize,
+			best_count,
+			best_i,
+			best_j,
+			best_i,
+			best_k,
+			g[best_i*gsize+best_j],
+			g[best_i*gsize+best_k]);
+
+		/*
+		 * rinse and repeat
+		 */
+	}
 }

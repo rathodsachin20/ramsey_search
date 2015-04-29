@@ -249,7 +249,7 @@ main(int argc,char *argv[])
 	/*
 	 *make a fifo to use as the taboo list
 	 */
-        taboo_list = FIFOInitEdge(TABOOSIZE);
+        taboo_list = FIFOInitGraph(TABOOSIZE);
         if(taboo_list == NULL) {
                 exit(1);
         }
@@ -311,7 +311,7 @@ main(int argc,char *argv[])
 			/*
 			 * reset the taboo list for the new graph
 			 */
-			taboo_list = FIFOResetEdge(taboo_list);
+			taboo_list = FIFOResetGraph(taboo_list);
 
 			/*
 			 * keep going
@@ -348,9 +348,9 @@ main(int argc,char *argv[])
 				 * is it better and the i,j,count not taboo?
 				 */
 				if((count < best_count) && 
-//					!FIFOFindEdge(taboo_list,i,j))
-					!FIFOFindEdgeCount(taboo_list,i,j,count) &&
-					!FIFOFindEdgeCount(taboo_list,i,k, count))
+					!FIFOFindGraph(taboo_list,g,gsize))
+//					!FIFOFindEdgeCount(taboo_list,i,j,count) &&
+//					!FIFOFindEdgeCount(taboo_list,i,k, count))
 				{
 					/* no need to store j + 1 */
 					best_count = count;
@@ -383,9 +383,9 @@ main(int argc,char *argv[])
 		 * it again
 		 */
 		count = CliqueCount(g,gsize);
-//		FIFOInsertEdge(taboo_list,best_i,best_j);
-		FIFOInsertEdgeCount(taboo_list,best_i,best_j,count);
-		FIFOInsertEdgeCount(taboo_list,best_i,best_k,count);
+		FIFOInsertGraph(taboo_list,g,gsize);
+//		FIFOInsertEdgeCount(taboo_list,best_i,best_j,count);
+//		FIFOInsertEdgeCount(taboo_list,best_i,best_k,count);
 
 		printf("ce size: %d, best_count: %d, best edges: (%d,%d) (%d,%d), new colors: %d %d\n",
 			gsize,
