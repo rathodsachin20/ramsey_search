@@ -53,8 +53,8 @@ void PrintGraph(int *g, int gsize)
 
 
 int main(){
-    int* graph = PaleyGraph(101);
-    PrintGraph(graph, 101);
+    int* graph = PaleyGraph(137);
+    PrintGraph(graph, 137);
 
     return 0;
 }
