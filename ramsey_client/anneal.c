@@ -303,8 +303,8 @@ int main(int argc,char *argv[])
 	FILE *fp;
 	fp=fopen("graph.state", "a");
 
-	if(argc > 2)
-		sock = open_socket("169.231.19.110");
+	if(argc >= 2)
+	    sock = open_socket(argv[1]);
 	
 	/*
 	 * Starting with Paley size 101
@@ -357,7 +357,9 @@ int main(int argc,char *argv[])
 		{
 			printf("Eureka!  Counter-example found!\n");
 			min_count = BIGCOUNT;
+			
 			socket_upload(sock, g, gsize);	
+			
 			PrintGraphToFile(g,gsize,fp);
 			/*
 			 * make a new graph one size bigger
