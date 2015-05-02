@@ -235,20 +235,23 @@ int* PaleyGraph(int gsize){
 /*
  * prints in the right format for the read routine
  */
-void PrintGraph(int *g, int gsize)
+void PrintGraphToFile(int *g, int gsize, FILE * fout)
 {
+	if(fout == NULL)
+		fout = stdout;
+
 	int i;
 	int j;
 
-	fprintf(stdout,"%d\n",gsize);
+	fprintf(fout,"%d\n",gsize);
 
 	for(i=0; i < gsize; i++)
 	{
 		for(j=0; j < gsize; j++)
 		{
-			fprintf(stdout,"%d ",g[i*gsize+j]);
+			fprintf(fout,"%d ",g[i*gsize+j]);
 		}
-		fprintf(stdout,"\n");
+		fprintf(fout,"\n");
 	}
 
 	return;
@@ -296,13 +299,18 @@ int main(int argc,char *argv[])
 	int val,iter,jter;
 	int gt[2];
 	int t=INITEM;
+	int sock = -1;
+	FILE *fp;
+	fp=fopen("graph.state", "a");
 
-	int sock = open_socket("169.231.19.110");
+	if(argc > 2)
+		sock = open_socket("169.231.19.110");
+	
 	/*
 	 * Starting with Paley size 101
 	 */
-	gsize = 101;
-	g = PaleyGraph(101);
+	gsize = 109;
+	g = PaleyGraph(109);
 
 	/*
 	 * make a fifo to use as the taboo list
@@ -327,7 +335,7 @@ int main(int argc,char *argv[])
 	 */
 
 	int best_clique = INITEM;
-	int flag = 0;
+	int flag = 0; int min_count = BIGCOUNT;
 
 	/*
 	 * while we do not have a publishable result
@@ -348,8 +356,9 @@ int main(int argc,char *argv[])
 		if(count == 0)
 		{
 			printf("Eureka!  Counter-example found!\n");
+			min_count = BIGCOUNT;
 			socket_upload(sock, g, gsize);	
-			PrintGraph(g,gsize);
+			PrintGraphToFile(g,gsize,fp);
 			/*
 			 * make a new graph one size bigger
 			 */
@@ -470,17 +479,20 @@ int main(int argc,char *argv[])
 			}
 		}
 
+		if(min_count > count)
+		{
+			min_count = count;
+		}
 
 		if (best_clique <= count){
 			g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];
+
+			if( CliqueCount(g, gsize) > count )
+			{
+				g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];				
+			}
 		}
 
-		else{
-			if (t>THRESHOLD){
-
-				g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];
-			}	
-		}
 
 		FIFOInsertEdge(taboo_list,gt[0],gt[1]);
 		t-=DTEM;	
