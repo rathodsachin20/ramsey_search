@@ -9,7 +9,7 @@
 
 #define MAXSIZE (541)
 
-#define TABOOSIZE (500)
+#define TABOOSIZE (8000)
 #define BIGCOUNT (9999999)
 
 /***
