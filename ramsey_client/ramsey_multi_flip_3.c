@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "fifo.h"	/* for taboo list */
-#include "graph_utils.h"
+//#include "graph_utils.h"
 
 #define USE_TABOO
 
@@ -376,6 +376,7 @@ main(int argc,char *argv[])
 		gsize = atoi(argv[1]);
 		g = (int *)malloc(gsize*gsize*sizeof(int));
 		ReadGraph(argv[2], &g, &gsize);
+		printf("Starting from given graph of size %d\n.", gsize);
 	}
 
 	/*
