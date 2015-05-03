@@ -370,9 +370,9 @@ main(int argc,char *argv[])
 				if(count < best_count){
 					best_count = count;
 					if(count == count_1
-#ifdef USE_TABOO
+//#ifdef USE_TABOO
 						&& !FIFOFindEdgeCount(taboo_list,i,j,count)
-#endif
+//#endif
 						)
 					{
 						best_i = i;
@@ -380,10 +380,10 @@ main(int argc,char *argv[])
 						best_k = best_l = -1;
 					}
 					else if(count == count_2
-#ifdef USE_TABOO
-						&& !FIFOFindEdgeCount(taboo_list,i,j,count)
-						&& !FIFOFindEdgeCount(taboo_list,i,k, count)
-#endif
+//#ifdef USE_TABOO
+						&& (!FIFOFindEdgeCount(taboo_list,i,j,count)
+						|| !FIFOFindEdgeCount(taboo_list,i,k, count))
+//#endif
 						)
 					{
 						best_i = i;
@@ -392,11 +392,11 @@ main(int argc,char *argv[])
 						best_l = -1;
 					}
 					else if(count == count_3
-#ifdef USE_TABOO
-						&& !FIFOFindEdgeCount(taboo_list,i,j,count)
-						&& !FIFOFindEdgeCount(taboo_list,i,k, count)
-						&& !FIFOFindEdgeCount(taboo_list,i,l, count)
-#endif
+//#ifdef USE_TABOO
+						&& (!FIFOFindEdgeCount(taboo_list,i,j,count)
+						|| !FIFOFindEdgeCount(taboo_list,i,k, count)
+						|| !FIFOFindEdgeCount(taboo_list,i,l, count))
+//#endif
 						)
 					{
 						best_i = i;
@@ -433,15 +433,16 @@ main(int argc,char *argv[])
 		 * taboo this graph configuration so that we don't visit
 		 * it again
 		 */
-		count = CliqueCount(g,gsize);
-#ifdef USE_TABOO
+		//count = CliqueCount(g,gsize);
+		count = best_count;
+//#ifdef USE_TABOO
 //		FIFOInsertEdge(taboo_list,best_i,best_j);
 		FIFOInsertEdgeCount(taboo_list,best_i,best_j,count);
 		if (best_k != -1)
 			FIFOInsertEdgeCount(taboo_list,best_i,best_k,count);
 		if (best_l != -1)
 			FIFOInsertEdgeCount(taboo_list,best_i,best_l,count);
-#endif
+//#endif
 		printf("ce size: %d, best_count: %d, best edges: (%d,%d) (%d,%d) (%d,%d), new colors: %d %d\n",
 			gsize,
 			best_count,
