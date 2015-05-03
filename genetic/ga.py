@@ -1,11 +1,20 @@
 from random import random, randint, expovariate
 from ramsey import *
-import re
+import sys
+import signal
 
 np.set_printoptions(threshold=np.nan)
 
+current_graph = None
+current_count = None
+
 def create_pop_from_indiv(indiv, pop_count=100):
     return [indiv]*pop_count
+
+def write_graph(filename, individual, prefix_line=""):
+    with open(filename, 'a') as f:
+        arstr = ''.join([x for x in np.array_str(individual) if x.isdigit()])
+        f.write(prefix_line+":\n"+arstr+"\n")
 
 def read_graph(filename, n):
     try:
@@ -42,19 +51,28 @@ def population(count, dim, pop_in=None):
 
 def fitness(individual, target):
     #score = sum(individual)
+    global current_graph
+    global current_count
     score = clique_count(individual)
-    if score==0:
-        #print "Found counter-example of size:", len(individual)
-        if(len(individual))>50:
-            toprint = "found counter example of size:"+str(len(individual))
-            print toprint
-            #print individual
-            try:
-                with open('counters', 'a') as f:
-                    arstr = ''.join([x for x in np.array_str(individual) if x.isdigit()])
-                    f.write("\ncounter-example of size:"+str(len(individual))+":\n"+arstr)
-            except Exception as ex:
-                print "Error while writing:", ex
+    current_graph = individual
+    current_count = score
+    try:
+        if score<25:
+            #print "Found counter-example of size:", len(individual)
+            if score==0:
+                toprint = "found counter example of size:"+str(len(individual))
+                print toprint
+            if(len(individual))>110 and score==0:
+                toprint = "found counter example of size:"+str(len(individual))
+                print toprint
+                #print individual
+                fname = "counter."+str(len(individual))
+                write_graph(fname, individual, "counter-example of size:"+str(len(individual)))
+            if(len(individual))>112 and score<25:
+                fname = "counter."+str(len(individual))+str(score)
+                write_graph(fname, individual, "example of size:"+str(len(individual))+" & count:"+str(score))
+    except Exception as ex:
+        print "Error while writing:", ex
     return abs(score - target)
 
 def grade(population, target, graded_list=None):
@@ -68,8 +86,8 @@ def crossover(male, female, male_i, female_i, total):
     dim = len(male)
     mscore = 1.0*(total-male_i)
     fscore = 1.0*(total-female_i)
-    mscore *= mscore
-    fscore *= fscore
+    mscore = pow(mscore, 3)
+    fscore = pow(fscore, 3)
     mprob = mscore/(mscore+fscore)
     total = dim*(dim-1)/2
     melem = int(total*mprob)
@@ -151,9 +169,22 @@ def ramsey_ga_onegen(pop_in, dim, pop_count, generations, target_count):
     target = 0
     p = population(pop_count, dim, pop_in)
     #fitness_history = [grade(p,target),]
-
+    init_min_count = 100000
+    min_count = 1000000
+    mutate = 0.1
     for i in xrange(generations):
-        (p, zero_count, min_count) = evolve(p, target)
+        #if i==int(generations*0.25) and min_count>int(init_min_count*0.25):
+        if i>50 and min_count>int(init_min_count*0.25):
+            mutate = 0.2
+        if i>100 and min_count>int(init_min_count*0.5):
+            mutate = 0.3
+        if i>150 and min_count>int(init_min_count*0.75):
+            mutate = 0.4
+
+        (p, zero_count, min_count) = evolve(p, target, mutate=mutate)
+
+        if i==0:
+            init_min_count = min_count
         #gr = grade(p, target)
         print "dim:", dim, "  poulation #counter-examples:", zero_count, ".. Mincount:",min_count
         if zero_count>=target_count:
@@ -164,6 +195,17 @@ def ramsey_ga_onegen(pop_in, dim, pop_count, generations, target_count):
     #    print line
     #print fitness_history
     return p
+
+def get_new_pop(pop_old, dim):
+    pop_new = []
+    for indiv in pop_old:
+        indiv_new = np.zeros((dim+1, dim+1), dtype=int)
+        indiv_new[0:dim, 0:dim] = indiv
+        for i in xrange(dim+1):
+            indiv_new[i][dim] = randint(0,1)
+            indiv_new[dim][i] = indiv_new[i][dim]
+        pop_new.append(indiv_new)
+    return pop_new
 
 def ramsey_ga(start_dim, end_dim, pop_count, generations, graphfile=None):
     if graphfile is not None:
@@ -180,18 +222,26 @@ def ramsey_ga(start_dim, end_dim, pop_count, generations, graphfile=None):
         print "Evolving Generation of dimension:", dim
         pop_old = ramsey_ga_onegen(pop_cur, dim, pop_count, generations, 1)
         #pop_new = np.zeros((dim+1,dim+1), dtype=int)
-        pop_new = []
-        for indiv in pop_old:
-            indiv_new = np.zeros((dim+1, dim+1), dtype=int)
-            indiv_new[0:dim, 0:dim] = indiv
-            for i in xrange(dim+1):
-                indiv_new[i][dim] = randint(0,1)
-                indiv_new[dim][i] = indiv_new[i][dim]
-            pop_new.append(indiv_new)
-        pop_cur = pop_new
+        pop_cur = get_new_pop(pop_old, dim)
         dim = dim +1
 
+def sigint_handler(signal, frame):
+    print "Received CTRL+C. Dumping current graph to file."
+    global current_graph
+    global current_count
+    if current_graph is None:
+        print "No graph to write. Exiting."
+        sys.exit(0)
+    else:
+        size = len(current_graph)
+        line = "Dumped graph of size "+str(size)+" and cliquecount:"+str(current_count)
+        filename = "dump."+str(size)+"."+str(current_count)
+        write_graph(filename, current_graph, line)
+        sys.exit(0)
+
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, sigint_handler)
     #target = 371
     #pop_count = 100
     #i_length = 5
@@ -209,6 +259,16 @@ if __name__ == "__main__":
     start = 101
     stop = 180
     pop = 100
-    gen = 150
+    gen = 1000
+    f = "paley-101.txt"
+    if len(sys.argv)==2:
+        start = int(sys.argv[1])
+        f = None
+        print "starting with graph of size ", start
+    if len(sys.argv)>2:
+        start = int(sys.argv[1])
+        f = sys.argv[2]
+        print "starting with given graph of size ", start
     #ramsey_ga(start, stop, pop, gen, graphfile)
-    ramsey_ga(start, stop, pop, gen, "paley-101.txt")
+    print "starting with size ", start
+    ramsey_ga(start, stop, pop, gen, f)
