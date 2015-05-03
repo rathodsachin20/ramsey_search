@@ -69,7 +69,7 @@ def fitness(individual, target):
                 fname = "counter."+str(len(individual))
                 write_graph(fname, individual, "counter-example of size:"+str(len(individual)))
             if(len(individual))>112 and score<25:
-                fname = "counter."+str(len(individual))+str(score)
+                fname = "counter."+str(len(individual))+"."+str(score)
                 write_graph(fname, individual, "example of size:"+str(len(individual))+" & count:"+str(score))
     except Exception as ex:
         print "Error while writing:", ex
