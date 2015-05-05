@@ -32,8 +32,6 @@ def clientthread(conn):
      
     #infinite loop so that function do not terminate and thread do not end.
     while True:
-         
-        #Receiving from client
         data = conn.recv(1024)
         print data.strip()
         reply = 'OK...' + data
