@@ -373,9 +373,12 @@ main(int argc,char *argv[])
 		g = PaleyGraph(gsize);
 	}
 	else {
+		char graphfile[256];
+		strcpy(graphfile, argv[2]);
 		gsize = atoi(argv[1]);
+		//printf("gsize=%d", gsize);
 		g = (int *)malloc(gsize*gsize*sizeof(int));
-		ReadGraph(argv[2], &g, &gsize);
+		ReadGraph(graphfile, &g, &gsize);
 		printf("Starting from given graph of size %d\n.", gsize);
 	}
 
