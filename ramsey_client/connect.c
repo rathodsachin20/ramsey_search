@@ -35,6 +35,7 @@ void socket_upload(int sock, int *g,int gsize)
 	if(sock == -1)
 		return;
 	
+	printf("Uploading graph");
 	int *gCopy = (int*)malloc(gsize*gsize*sizeof(int));
 	memcpy(gCopy,g,gsize*gsize*sizeof(int));
 	struct sockaddr_in sockInfo;
