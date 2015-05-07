@@ -7,11 +7,11 @@
 #include "fifo.h"	/* for taboo list */
 //#include "graph_utils.h"
 
-//#define USE_TABOO
+#define USE_TABOO
 
 #define MAXSIZE (541)
 
-#define TABOOSIZE (2000)
+#define TABOOSIZE (1000)
 #define BIGCOUNT (9999999)
 
 /***
@@ -499,24 +499,25 @@ main(int argc,char *argv[])
 				 * is it better and the i,j,count not taboo?
 				 */
 				if(count < best_count){
-					best_count = count;
 					if(count == count_1
 #ifdef USE_TABOO
 						&& !FIFOFindEdgeCount(taboo_list,i,j,count)
 #endif
 						)
 					{
+						best_count = count;
 						best_i = i;
 						best_j = j;
 						best_k = best_l = -1;
 					}
 					else if(count == count_2
 #ifdef USE_TABOO
-						&& (!FIFOFindEdgeCount(taboo_list,i,j,count)
+						|| (!FIFOFindEdgeCount(taboo_list,i,j,count)
 						|| !FIFOFindEdgeCount(taboo_list,i,k, count))
 #endif
 						)
 					{
+						best_count = count;
 						best_i = i;
 						best_j = j;
 						best_k = k;
@@ -530,6 +531,7 @@ main(int argc,char *argv[])
 #endif
 						)
 					{
+						best_count = count;
 						best_i = i;
 						best_j = j;
 						best_k = k;
