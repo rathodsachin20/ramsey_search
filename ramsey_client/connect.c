@@ -34,46 +34,87 @@ void socket_upload(int sock, int *g,int gsize)
 {
 	if(sock == -1)
 		return;
+
+	printf("Uploading graph \n");
+	char *key;
+	MakeGraphKey(g,gsize,&key);
+
+	char buf[1024];// =  (char *)malloc(1024 * sizeof(char));
+	bzero(buf, 1024);
+	sprintf(buf, "{ 'gsize' : %d , 'graph': %s}",gsize, key);
 	
-	printf("Uploading graph");
-	int *gCopy = (int*)malloc(gsize*gsize*sizeof(int));
-	memcpy(gCopy,g,gsize*gsize*sizeof(int));
-	struct sockaddr_in sockInfo;
-	char *toSend = (char*)malloc(255+(gsize*gsize+2)*sizeof(char));
-	int i,j;
-	unsigned char bytes[4];
-	bytes[0] = (gsize >> 24) & 0xFF;
-	bytes[1] = (gsize >> 16) & 0xFF;
-	bytes[2] = (gsize >> 8) & 0xFF;
-	bytes[3] = gsize & 0xFF;
-	write(sock,&bytes,sizeof(bytes));
-	
-	for(i=0;i<gsize*gsize;i++)
-	{
-		toSend[i] = '0' + gCopy[i];
-	}
-	toSend[i] = '\n';
-	toSend[i+1] = '\0';
-	while(1)
-	{
-		for(j=0;j<(gsize*gsize+2)/255+1;j++)
-		{
-			if(send(sock,toSend+j*255,255,0)<0)
-			{
-				printf("fail, retrying at package %d...\n",j);
-				j--;
-				continue;
-			}
-		}
-		printf("wait.\n");
-		char buf[256];
-		buf[0] = 0;
-		int received = recv(sock,buf,1,0);
-		if(received==1)
-			break;
-	}
+	int n = write(sock,&buf,sizeof(buf));
+
+	if(n < 0)
+		printf("Write failed \n");
+
 	printf("sent.\n");
-	free(gCopy);
-	free(toSend);
+	free(key);
+	
+}
+
+
+
+void socket_upload_2(int sock, int x, int y)
+{
+	if(sock == -1)
+		return;
+
+	char buf[1024];
+	bzero(buf, 1024);
+	sprintf(buf, "fifo_update: { 'x' : %d , 'y': %d}",x, y);
+
+	int n = write(sock,&buf,sizeof(buf));
+
+	if(n < 0)
+		printf("Write failed \n");
+
+	printf("sent.\n");
+}
+
+void* wait_for_server(void *arg)
+{
+	int sock = *((int *) arg);
+
+    printf("Starting server YAYYAYAYAYAYAY\n");
+	if(sock == -1)
+		return 0;
+
+    printf("Starting server YAYYAYAYAYAYAY\n");
+
+    int read_size;
+    char *message , client_message[2000];
+
+    printf("Starting server YAYYAYAYAYAYAY\n");
+    while(1)
+     {
+     	//Receive a message from client
+	    while( (read_size = read(sock , client_message , 2000 , 0)) > 0 )
+	    {
+	        //end of string marker
+			client_message[read_size] = '\0';
+			
+			//Send the message back to client
+			printf("Recieved !!!!! %s",client_message);
+			
+			//clear the message buffer
+			memset(client_message, 0, 2000);
+	    }
+	}
+         
+    return 0;
+}
+
+/*
+* This function recieves messages from the master node and performs instructions accordingly
+*/
+void create_fifo_thread(int *sockPtr)
+{
+	pthread_t tid;
+	int err = pthread_create(&tid, NULL, &wait_for_server, &sockPtr);
+    if (err != 0)
+        printf("\ncan't create thread :[%s]", strerror(err));
+    else
+        printf("\n Thread created successfully\n");
 }
 

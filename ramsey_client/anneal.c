@@ -9,6 +9,7 @@
 #include "fifo.h"	/* for taboo list */
 #include "graph_utils.h"
 #include "connect.h"
+#include <pthread.h>
 
 #define sgsize 7
 #define MAXSIZE (541)
@@ -283,7 +284,6 @@ void CopyGraph(int *old_g, int o_gsize, int *new_g, int n_gsize)
 	return;
 }
 
-
 int main(int argc,char *argv[])
 {
 	int *g;
@@ -301,11 +301,13 @@ int main(int argc,char *argv[])
 	int t=INITEM;
 	int sock = -1;
 	FILE *fp;
-	fp=fopen("graph.state", "a");
 
+	fp=fopen("graph.state", "a");
 	if(argc >= 2)
 	    sock = open_socket(argv[1]);
-	
+
+	create_fifo_thread(&sock);
+
 	/*
 	 * Starting with Paley size 101
 	 */
@@ -320,19 +322,6 @@ int main(int argc,char *argv[])
 		exit(1);
 	}
 
-	/*
-	 * start out with all zeros
-
-	 memset(g,0,gsize*gsize*sizeof(int));
-	 val = 0, iter = 0, jter=0;
-	 for( iter=0; iter<gsize; iter++){
-	 for( jter = 0; jter< gsize; jter++){
-	 g[iter*gsize + jter]  = val;
-	 val = 1 - val; 
-	 }
-	 }
-	 PrintGraph(g, gsize);
-	 */
 
 	int best_clique = INITEM;
 	int flag = 0; int min_count = BIGCOUNT;
@@ -489,7 +478,7 @@ int main(int argc,char *argv[])
 		if (best_clique <= count){
 			g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];
 
-			if( CliqueCount(g, gsize) > count )
+			if( CliqueCount(g, gsize) - count <10)
 			{
 				g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];				
 			}
@@ -497,6 +486,8 @@ int main(int argc,char *argv[])
 
 
 		FIFOInsertEdge(taboo_list,gt[0],gt[1]);
+		socket_upload_2(sock, gt[0], gt[1]);
+		
 		t-=DTEM;	
 		if (t==0){
 			t=INITEM;
