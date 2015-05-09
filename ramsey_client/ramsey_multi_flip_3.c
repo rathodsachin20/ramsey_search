@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <signal.h>
 
 #include "fifo.h"	/* for taboo list */
 //#include "graph_utils.h"
@@ -13,6 +14,11 @@
 
 #define TABOOSIZE (1000)
 #define BIGCOUNT (9999999)
+
+int* g_latest = NULL;
+int g_size_latest = 1;
+int g_count_latest = 100000;
+
 
 /***
  *** example of very simple search for R(7,7) counter examples
@@ -47,6 +53,24 @@ void PrintGraph(int *g, int gsize)
 
 	return;
 }
+
+void sig_handler(int signum){
+	printf("Caught signal %d\n", signum);
+	//char filename[100] = "dump_";
+	//char str_num[32];
+	//sprintf(str_num, "%d.%d", g_size_latest, g_count_latest);
+	//strcat(filename, str_num);
+	if(g_latest != NULL){
+		printf("Printing current graph with size: %d and count: %d\n", g_size_latest, g_count_latest);
+		PrintGraph(g_latest, g_size_latest);
+	}
+	else {
+		printf("No graph to print :(\n");
+	}
+	exit(signum);
+}
+
+
 
 /*
  * reads a graph of the correct format from the file referenced
@@ -323,6 +347,8 @@ int* PaleyGraph(gsize){
 int
 main(int argc,char *argv[])
 {
+	signal(SIGINT, sig_handler);
+
 	int *g;
 	int *new_g;
 	int gsize;
@@ -512,7 +538,7 @@ main(int argc,char *argv[])
 					}
 					else if(count == count_2
 #ifdef USE_TABOO
-						|| (!FIFOFindEdgeCount(taboo_list,i,j,count)
+						&& (!FIFOFindEdgeCount(taboo_list,i,j,count)
 						|| !FIFOFindEdgeCount(taboo_list,i,k, count))
 #endif
 						)
@@ -587,7 +613,9 @@ main(int argc,char *argv[])
 			best_l,
 			g[best_i*gsize+best_j],
 			g[best_i*gsize+best_k]);
-
+		g_latest = g;
+		g_size_latest = gsize;
+		g_count_latest = count;
 		/*
 		 * rinse and repeat
 		 */
