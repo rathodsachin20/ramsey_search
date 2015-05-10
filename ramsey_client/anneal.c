@@ -234,31 +234,6 @@ int* PaleyGraph(int gsize){
 
 
 /*
- * prints in the right format for the read routine
- */
-void PrintGraphToFile(int *g, int gsize, FILE * fout)
-{
-	if(fout == NULL)
-		fout = stdout;
-
-	int i;
-	int j;
-
-	fprintf(fout,"%d\n",gsize);
-
-	for(i=0; i < gsize; i++)
-	{
-		for(j=0; j < gsize; j++)
-		{
-			fprintf(fout,"%d ",g[i*gsize+j]);
-		}
-		fprintf(fout,"\n");
-	}
-
-	return;
-}
-
-/*
  * CopyGraph 
  *
  */
@@ -300,19 +275,17 @@ int main(int argc,char *argv[])
 	int gt[2];
 	int t=INITEM;
 	int sock = -1;
-	FILE *fp;
 
-	fp=fopen("graph.state", "a");
 	if(argc >= 2)
 	    sock = open_socket(argv[1]);
 
-	create_fifo_thread(&sock);
+	//create_fifo_thread(&sock);
 
 	/*
 	 * Starting with Paley size 101
 	 */
-	gsize = 109;
-	g = PaleyGraph(109);
+	gsize = 13;
+	g = PaleyGraph(13);
 
 	/*
 	 * make a fifo to use as the taboo list
@@ -346,10 +319,10 @@ int main(int argc,char *argv[])
 		{
 			printf("Eureka!  Counter-example found!\n");
 			min_count = BIGCOUNT;
+
+			socket_upload_2(sock, -1, -1, count, gsize, g);
 			
-			socket_upload(sock, g, gsize);	
-			
-			PrintGraphToFile(g,gsize,fp);
+
 			/*
 			 * make a new graph one size bigger
 			 */
@@ -478,7 +451,7 @@ int main(int argc,char *argv[])
 		if (best_clique <= count){
 			g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];
 
-			if( CliqueCount(g, gsize) - count <10)
+			if( CliqueCount(g, gsize) - count > 10)
 			{
 				g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];				
 			}
@@ -486,14 +459,14 @@ int main(int argc,char *argv[])
 
 
 		FIFOInsertEdge(taboo_list,gt[0],gt[1]);
-		socket_upload_2(sock, gt[0], gt[1]);
 		
 		t-=DTEM;	
 		if (t==0){
 			t=INITEM;
 		}
 
-		printf("size: %d, temperature: %d, count: %d, best_clique: %d\n", gsize,t, count, best_clique);
+		socket_upload_2(sock, gt[0], gt[1], count, gsize, g);
+		printf("size: %d, temperature: %d, count: %d, best_clique: %d\n", gsize, t, count, best_clique);
 
 		free(cliques);
 

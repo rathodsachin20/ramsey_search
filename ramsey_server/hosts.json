@@ -1,8 +1,6 @@
 {
     "hosts": {
-    	"dbjnbnrj@ramsey1.cloudapp.net:22": "Ram$ey204",
-        "dbjnbnrj@ramsey2.cloudapp.net:22": "Ram$ey204",
-        "dbjnbnrj@ramsey3.cloudapp.net:22": "Ram$ey204"
+    	"dbjnbnrj@ramsey1.cloudapp.net:22": "Ram$ey204"
     },
     "code_dir" : "/home/dbjnbnrj/ramsey_search/"
 }

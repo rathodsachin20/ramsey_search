@@ -245,7 +245,7 @@ int main(int argc,char *argv[])
 	void *taboo_list;
 	int val,iter,jter;
 
-	int sock = open_socket();
+	//int sock = open_socket();
 	/*
 	 * start with graph of size 40
 	 */

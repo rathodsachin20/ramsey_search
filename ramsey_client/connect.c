@@ -1,9 +1,12 @@
-#include<stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
+#include<stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <sys/types.h>
+ #include <sys/ioctl.h>
+#include <ifaddrs.h>
 
 int open_socket(const char* address){
 	int sock;
@@ -34,42 +37,114 @@ void socket_upload(int sock, int *g,int gsize)
 {
 	if(sock == -1)
 		return;
+	
+	printf("Uploading graph - 1");
 
-	printf("Uploading graph \n");
+	int *gCopy = (int*)malloc(gsize*gsize*sizeof(int));
+	memcpy(gCopy,g,gsize*gsize*sizeof(int));
+	
+	struct sockaddr_in sockInfo;
+	
+	char *toSend = (char*)malloc(255+(gsize*gsize+2)*sizeof(char));
+	int i,j;
+
 	char *key;
 	MakeGraphKey(g,gsize,&key);
-
-	char buf[1024];// =  (char *)malloc(1024 * sizeof(char));
-	bzero(buf, 1024);
-	sprintf(buf, "{ 'gsize' : %d , 'graph': %s}",gsize, key);
 	
-	int n = write(sock,&buf,sizeof(buf));
-
-	if(n < 0)
-		printf("Write failed \n");
-
+	for(i=0;i<gsize*gsize;i++)
+	{
+		toSend[i] = '0' + gCopy[i];
+	}
+	toSend[i] = '\n';
+	toSend[i+1] = '\0';
+	while(1)
+	{
+		for(j=0;j<(gsize*gsize+2)/255+1;j++)
+		{
+			if(send(sock,toSend+j*255,255,0)<0)
+			{
+				printf("fail, retrying at package %d...\n",j);
+				j--;
+				continue;
+			}
+		}
+		printf("wait.\n");
+		char buf[256];
+		buf[0] = 0;
+		int received = recv(sock,buf,1,0);
+		if(received==1)
+			break;
+	}
 	printf("sent.\n");
+	free(gCopy);
 	free(key);
+	free(toSend);
 	
 }
 
+/*
+ * prints in the right format for the read routine
+ */
+void PrintGraphToFile(int *g, int gsize, FILE * fout)
+{
+	if(fout == NULL)
+		fout = stdout;
 
+	int i;
+	int j;
 
-void socket_upload_2(int sock, int x, int y)
+	fprintf(fout,"%d\n",gsize);
+
+	for(i=0; i < gsize; i++)
+	{
+		for(j=0; j < gsize; j++)
+		{
+			fprintf(fout,"%d ",g[i*gsize+j]);
+		}
+		fprintf(fout,"\n");
+	}
+
+	return;
+}
+
+void socket_upload_2(int sock, int x, int y, int count, int gsize, int *g)
 {
 	if(sock == -1)
 		return;
 
+	printf("Uploading graph -2 \n");
+	char *key;
+	MakeGraphKey(g,gsize,&key);
+
 	char buf[1024];
 	bzero(buf, 1024);
-	sprintf(buf, "fifo_update: { 'x' : %d , 'y': %d}",x, y);
-
+	sprintf(buf, "{ 'x' : %d , 'y': %d, 'count': %d, 'gsize' : %d , 'graph': '%s' }", x, y, count, gsize, key);
 	int n = write(sock,&buf,sizeof(buf));
+
+	printf("Sending graph \n");
+ 	socket_upload(sock, g,gsize);
 
 	if(n < 0)
 		printf("Write failed \n");
 
+	bzero(buf, 1024);
+	read(sock, buf, 1024);
+	printf("%s\n", buf);
+	int len = 0;
+
+	if( strstr(buf, "graph") !=NULL ){
+		printf("updating...\n");
+		for(int i=0; i<5 || len > 1024; i++)
+		{
+			bzero(buf, 1024);
+			len = read(sock, buf, 1024);
+			printf("Len is: %d\n", len);
+			printf("Buf is: %s\n", buf);
+		}
+	}
+	
 	printf("sent.\n");
+	free(key);
 }
 
 void* wait_for_server(void *arg)
