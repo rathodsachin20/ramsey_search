@@ -8,54 +8,119 @@ from thread import *
 import json
 import os
 
+count = 1
+broadcastFlag = True
+results = {}
+graphs = {}
+
 # Processing mesg
 def process(mesg):
     os.system("cd solutions; mkdir " + str(mesg["gsize"])) 
 
     if (mesg["msg_type"] == "counter-example"):
-#''' Currently write to a file, should write to S3 using boto '''
         fname = "solutions/" + str(mesg["gsize"]) + "/CE-" + str(mesg["gsize"]) + ".txt"
-        print fname
-    fp = open(fname, "w")
-    fp.write(json.dumps(mesg))
+        fp = open(fname, "w")
+        fp.write(json.dumps(mesg))
     else:
         fname = "solutions/" + str(mesg["gsize"]) + "/update" + ".txt"
 
-        #do something else
-
-
 # broadcast chat messages to all connected clients
-def broadcast (server_socket, sock, message):
-    print "Broadcasting"
-    for socket in SOCKET_LIST:
-        # send the message only to peer
-        if socket != server_socket and socket != sock :
-            try :
-                socket.send(message)
-            except :
-                socket.close()
-                if socket in SOCKET_LIST:
-                    SOCKET_LIST.remove(socket)
-     
+def broadcast ():
+    #  When converting to json check if result is best
+    # At the end send messages to all the nodes with the best graph and the list of moves
+    
+    global count
+    global broadcastFlag
+    global results
+    global graphs
+
+    broadcastFlag = False
+    Tmaxgsize = 0
+    Tmincount = 9999999
+    Tbestidx = -1
+    Tconn = -1
+
+    print "Broadcasting ...."
+    for conn in results:
+        idx = 0
+        maxgsize = 0
+        mincount = 9999999
+        bestidx = -1
+        for val in results[conn]:
+            if val["gsize"] > maxgsize:
+                maxgsize, bestidx = val["gsize"], idx
+            elif val["gsize"] == maxgsize & val["count"] < mincount:
+                mincount, bestidx = val["count"], idx
+            idx +=1
+
+        if maxgsize > Tmaxgsize:
+            Tmaxgsize,  Tbestidx, Tconn = maxgsize, bestidx, conn
+        elif Tmaxgsize == maxgsize & mincount < Tmincount:
+            Tmincount,  Tbestidx, Tconn = mincount, bestidx, conn
+
+    
+
+    print "Best graph is :"+json.dumps(results[conn][bestidx])
+
+    for conn in results:
+        solution = "graph: "+graphs[Tconn][Tbestidx]
+        conn.sendall(solution)
+
+    results = {}
+    graphs = {}
+    count = 0
+    broadcastFlag = True
+
 #Function for handling connections. This will be used to create threads
 def clientthread(conn):
     conn.send('Welcome to the server. Type something and hit enter\n') #send only takes string
-     
-    #infinite loop so that function do not terminate and thread do not end.
-    while True:
-        data = conn.recv(1024).strip()
-        stringdata = data.decode('utf-8')
-        print stringdata
-        reply = 'OK...' + data
-        print reply
-        conn.sendall(reply)
+    
+    global count
+    global broadcastFlag
+    global results
+    global graphs
 
-        # If there is a FIFO update broadcast it to everyone we know
-        if "fifo_update" in reply:
-            broadcast(s, conn, reply)
-        if not data: 
+    key = ''
+    graphdata = ''
+    while True:
+        # Server recives data from client
+        data = conn.recv(1024).strip()
+        data = str(data.decode('utf-8')).replace('\x00', '')
+        if not data:
+            print "Client ", conn, "has failed"
             break
-        #conn.sendall(reply)
+
+        if data:
+            if "gsize" in data: 
+                # Server sends reply to the client
+                reply = " --- "
+                conn.sendall(reply)
+                
+                # Add prev graph to dictionary
+                if graphdata:
+                    if not conn in graphs:
+                        graphs[conn] = []
+                    graphs[conn].append(graphdata)
+                    graphdata = ''
+
+                # Add json to the dictionary
+                data = data.replace("'",'"') 
+
+                if not conn in results:
+                    results[conn] = []
+
+                if "{" in data:
+                    dataJSON = json.loads( data )
+                    results[conn].append( dataJSON )
+
+                if count > 10 and broadcastFlag:
+                    broadcast()
+                
+                count += 1
+                print "@count:",count
+
+            if "01" in data:
+                graphdata +=data
      
     #came out of loop
     conn.close()
@@ -85,12 +150,10 @@ SOCKET_LIST = []
 while 1:
     #wait to accept a connection - blocking call
     conn, addr = s.accept()
-    SOCKET_LIST.append(conn)
     print 'Connected with ' + addr[0] + ':' + str(addr[1])
      
-    #start new thread takes 1st argument as a function name to be run, second is the tuple of arguments to the function.
     start_new_thread(clientthread ,(conn,))
- 
+
 s.close()
 
 

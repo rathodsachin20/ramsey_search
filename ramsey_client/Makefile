@@ -68,4 +68,5 @@ connect.o: connect.c connect.h
 	$(COMPILE) ${INCLUDES} -c connect.c
 
 clean:
-	rm -f *.o core
+	rm -rf *.o core
+	rm -rf *.dSYM core
