@@ -12,13 +12,8 @@
 
 #define MAXSIZE (541)
 
-#define TABOOSIZE (1000)
+#define TABOOSIZE (10)
 #define BIGCOUNT (9999999)
-
-int* g_latest = NULL;
-int g_size_latest = 1;
-int g_count_latest = BIGCOUNT;
-
 
 /***
  *** example of very simple search for R(7,7) counter examples
@@ -29,6 +24,13 @@ int g_count_latest = BIGCOUNT;
  *** uses a taboo list of size #TABOOSIZE# to hold and encoding of and edge
  *** (i,j)+clique_count
  ***/
+
+int* g_latest = NULL;
+int* g_orig = NULL;
+int g_size_latest = 1;
+int g_count_latest = BIGCOUNT;
+int count_orig = BIGCOUNT;
+
 
 /*
  * PrintGraph
@@ -67,17 +69,8 @@ void sig_handler(int signum){
 	else {
 		printf("No graph to print :(\n");
 	}
-	if(signum == SIGINT){
-		printf("Continuing execution.\n");
-		return;
-	}
-	else if (signum == SIGTERM){
-		printf("Exiting.\n");
-		exit(signum);
-	}
+	exit(signum);
 }
-
-
 
 /*
  * reads a graph of the correct format from the file referenced
@@ -348,15 +341,65 @@ int* PaleyGraph(gsize){
 }
 
 
+void create_sgraph(int** g, int gsize, int* row){
+	int i;
+	int j;
+	for(i=0; i<gsize; i++){
+		for(j=i; j<gsize; j++){
+			(*g)[j*gsize+i] = (*g)[i*gsize+j] = row[(j-i+gsize)%gsize];
+		}
+	}
+}
 
+void flip_sedge(int**g, int gsize, int i){
+	int k;
+	int val = 1 - (*g)[i];
+	for(k=0; k<gsize; k++){
+		(*g)[(i+k)%gsize+k*gsize] = (*g)[k*gsize+(i+k)%gsize] = val;
+	}
+}
 
+void set_sedge(int**g, int gsize, int i, int val){
+	int k;
+	for(k=0; k<gsize; k++){
+		(*g)[((i+k)%gsize)+k*gsize] = (*g)[(k*gsize)+(i+k)%gsize] = val;
+	}
+}
 
+void get_good_row(int* g, int** row, int gsize, int rowsize){
+	int i, j, count0, count1, diff;
+	int best_row = 0;
+	int best_diff = gsize;
+	int best_count0 = 0;
+	for(i=0; i<gsize; i++){
+		count0 = count1 = 0;
+		for(j=0; j<gsize; j++){
+			if(g[i*gsize+j]==0)
+				count0++;
+		}
+		count1 = gsize - count0;
+		diff = count0>count1 ? count0-count1 : count1-count0;
+		if(diff < best_diff){
+			best_count0 = count0;
+			best_diff = diff;
+			best_row = i;
+		}
+	}
+	printf("best row at:%d\n", best_row);
+	memcpy(*row, g+i*best_row, gsize*sizeof(int));
+	if(rowsize > gsize){ //Need to fill last position
+		if(best_count0 >= gsize-best_count0) // more 0s than 1's
+			row[gsize] = 1;
+		else
+			row[gsize] = 0;
+	}
+	return;
+}
 int
 main(int argc,char *argv[])
 {
 	signal(SIGINT, sig_handler);
-	signal(SIGTERM, sig_handler);
-
+	
 	int *g;
 	int *new_g;
 	int gsize;
@@ -366,13 +409,17 @@ main(int argc,char *argv[])
 	int count_3;
 	int i;
 	int j;
+	int k;
 	int best_count;
+	int prev_best_count;
 	int best_i;
 	int best_j;
 	int best_k;
 	int best_l;
 	void *taboo_list;
+	int* taboo_array;
 	int val,iter,jter;
+	int multi = 0;
 	/*
 	 * start with graph of size 8
 	 */
@@ -405,18 +452,62 @@ main(int argc,char *argv[])
 			exit(1);
         	}
 		g = PaleyGraph(gsize);
+		//int* row = (int *)malloc(gsize*sizeof(int));
+		//memcpy(row, g, gsize*sizeof(int));
+		//create_sgraph(&g, gsize, row);
+		taboo_array = (int*)malloc(sizeof(int)*gsize);
+		memset(taboo_array, 0, gsize*sizeof(int));
 		printf("Starting from Paley graph of size %d\n.", gsize);
 		fflush(stdout);
+		//free(row);
 	}
 	else {
-		char graphfile[256];
-		strcpy(graphfile, argv[2]);
 		gsize = atoi(argv[1]);
-		//printf("gsize=%d", gsize);
 		g = (int *)malloc(gsize*gsize*sizeof(int));
-		ReadGraph(graphfile, &g, &gsize);
-		printf("Starting from given graph of size %d\n.", gsize);
-		fflush(stdout);
+		ReadGraph(argv[2], &g, &gsize);
+		count = CliqueCount(g,gsize);
+		if (count == 0)
+		{
+			printf("Eureka!  Sym Counter-example found!\n");
+			PrintGraph(g,gsize);
+			fflush(stdout);
+			
+			new_g = (int *)malloc((gsize+1)*(gsize+1)*sizeof(int));
+			if(new_g == NULL)
+				exit(1);
+			
+			int* row = (int *)malloc((gsize+1)*sizeof(int));
+			get_good_row(g, &row, gsize, gsize+1);
+			g_orig = g;
+			count_orig = CliqueCount(g, gsize);
+			//free(g);
+			gsize = gsize+1;
+			create_sgraph(&new_g, gsize, row);
+			free(row);
+			//CopyGraph(g,gsize,new_g,gsize+1);
+			set_sedge(&new_g, gsize, gsize-1, 0);
+			int count0  = CliqueCount(new_g, gsize);
+			set_sedge(&new_g, gsize, gsize-1, 1);
+			int count1  = CliqueCount(new_g, gsize);
+			if(count0 < count1)
+				set_sedge(&new_g, gsize, gsize-1, 0);
+			taboo_array = (int*) malloc(sizeof(int)*gsize);
+			memset(taboo_array, 0, sizeof(int)*gsize);
+			g = new_g;
+			
+		}
+		else
+		{
+			int* row = (int *)malloc(gsize*sizeof(int));
+			get_good_row(g, &row, gsize, gsize);
+			//memcpy(row, g, gsize*sizeof(int));
+			create_sgraph(&g, gsize, row);
+			taboo_array = (int*)malloc(sizeof(int)*gsize);
+			memset(taboo_array, 0, gsize*sizeof(int));
+			printf("Starting from given graph of size %d\n.", gsize);
+			fflush(stdout);
+			free(row);
+		}
 	}
 
 	/*
@@ -431,13 +522,154 @@ main(int argc,char *argv[])
 	/*
 	 * while we do not have a publishable result
 	 */
+  while(gsize<206)
+  {
+
+	best_count = BIGCOUNT;
 	while(gsize < 206)
 	{
-		/*
-		 * find out how we are doing
-		 */
+		best_j = -1;
 		count = CliqueCount(g,gsize);
+		if(count == 0)
+		{
+			printf("Eureka!  Sym Counter-example found!\n");
+			PrintGraph(g,gsize);
+			fflush(stdout);
+			/*
+			 * make a new graph one size bigger
+			 */
+			new_g = (int *)malloc((gsize+1)*(gsize+1)*sizeof(int));
+			if(new_g == NULL)
+				exit(1);
+			
+			int* row = (int *)malloc((gsize+1)*sizeof(int));
+			get_good_row(g, &row, gsize, gsize+1);
+			//memcpy(row, g, gsize*sizeof(int));
+			free(g);
+			gsize = gsize+1;
+			create_sgraph(&new_g, gsize, row);
+			free(row);
+			//CopyGraph(g,gsize,new_g,gsize+1);
+			set_sedge(&new_g, gsize, gsize-1, 0);
+			int count0  = CliqueCount(new_g, gsize);
+			set_sedge(&new_g, gsize, gsize-1, 1);
+			int count1  = CliqueCount(new_g, gsize);
+			if(count0 < count1)
+				set_sedge(&new_g, gsize, gsize-1, 0);
+			taboo_array = (int*) malloc(sizeof(int)*gsize);
+			memset(taboo_array, 0, sizeof(int)*gsize);
+			g = new_g;
 
+			best_count = BIGCOUNT;
+			/*
+			 * reset the taboo list for the new graph
+			 */
+			//taboo_list = FIFOResetEdge(taboo_list);
+			free(taboo_array);
+			taboo_array = (int*) malloc(sizeof(int)*gsize);
+			memset(taboo_array, 0, sizeof(int)*gsize);
+
+			continue;
+		}
+		
+
+		//best_count = BIGCOUNT;
+		prev_best_count = best_count;
+		if(!multi){
+				for(i=0; i < gsize; i++)
+				{
+					
+					flip_sedge(&g, gsize, i);
+					count = CliqueCount(g,gsize);
+					if(count<best_count && !taboo_array[i]){
+					//if(count<best_count ){
+						best_count = count;
+						best_i = i;
+					}
+					flip_sedge(&g, gsize, i);
+				}
+		}
+		else {
+			best_j = best_k = -1;
+			for(i=0; i<gsize; i++) {
+				for(j=i+1; j<gsize; j++) {
+					for(k=j+1; k<gsize; k++) {
+						flip_sedge(&g, gsize, i);
+						count_1 = CliqueCount(g,gsize);
+						flip_sedge(&g, gsize, j);
+						count_2 = CliqueCount(g,gsize);
+						flip_sedge(&g, gsize, k);
+						count_3 = CliqueCount(g,gsize);
+
+                                		count = (count_1 < count_2) ? count_1 : count_2 ;
+						count = (count_3 < count) ? count_3 : count ;
+						if(count<best_count){
+							best_count = count;
+							if(count == count_1){
+								best_i = i;
+								best_j = -1;
+								best_k = -1;
+							}
+							else if(count == count_2){
+								best_i = i;
+								best_j = j;
+								best_k = -1;
+							}
+							else if(count == count_3){
+								best_i = i;
+								best_j = j;
+								best_k = k;
+							}
+
+						}
+						flip_sedge(&g, gsize, i);
+						flip_sedge(&g, gsize, j);
+						flip_sedge(&g, gsize, k);
+					}
+				}
+			}
+		}
+
+		if(best_count == BIGCOUNT || best_count==prev_best_count) {
+			if(multi)
+			{
+				printf("no best edge found, continuing with taboo\n");
+				if(count_orig < best_count) {
+					free(g);
+					g = g_orig;
+				}
+				else {
+					free(g_orig);
+				}
+				fflush(stdout);
+				break;
+			}
+			else
+			{
+				printf("single flip exhausted. starting multi-flip.", multi);
+				fflush(stdout);
+				//memset(taboo_array, 0, sizeof(int)*gsize);
+				multi = 1;
+				continue;
+			}
+			//flip_sedge(g, gsize, i);
+		}
+		flip_sedge(&g, gsize, best_i);
+		count = best_count;
+		if(best_j != -1)
+			flip_sedge(&g, gsize, best_j);
+		if(best_k != -1)
+			flip_sedge(&g, gsize, best_k);
+		taboo_array[best_i] = 1;
+		printf("sym ce size: %d, best_count: %d, best edge(s): (%d), (%d), (%d)\n", gsize, best_count, best_i, best_j, best_k);
+		g_latest = g;
+		g_size_latest = gsize;
+		g_count_latest = count;
+		fflush(stdout);
+	}
+
+	while(gsize < 206)
+	{
 		/*
 		 * if we have a counter example
 		 */
@@ -490,7 +722,8 @@ main(int argc,char *argv[])
 			/*
 			 * keep going
 			 */
-			continue;
+			//continue;
+			break; //Go to first while loop
 		}
 
 		/*
@@ -538,9 +771,9 @@ main(int argc,char *argv[])
 				 */
 				if(count < best_count){
 					if(count == count_1
-#ifdef USE_TABOO
+//#ifdef USE_TABOO
 						&& !FIFOFindEdgeCount(taboo_list,i,j,count)
-#endif
+//#endif
 						)
 					{
 						best_count = count;
@@ -549,10 +782,10 @@ main(int argc,char *argv[])
 						best_k = best_l = -1;
 					}
 					else if(count == count_2
-#ifdef USE_TABOO
+//#ifdef USE_TABOO
 						&& (!FIFOFindEdgeCount(taboo_list,i,j,count)
 						|| !FIFOFindEdgeCount(taboo_list,i,k, count))
-#endif
+//#endif
 						)
 					{
 						best_count = count;
@@ -562,11 +795,11 @@ main(int argc,char *argv[])
 						best_l = -1;
 					}
 					else if(count == count_3
-#ifdef USE_TABOO
+//#ifdef USE_TABOO
 						&& (!FIFOFindEdgeCount(taboo_list,i,j,count)
 						|| !FIFOFindEdgeCount(taboo_list,i,k, count)
 						|| !FIFOFindEdgeCount(taboo_list,i,l, count))
-#endif
+//#endif
 						)
 					{
 						best_count = count;
@@ -606,14 +839,14 @@ main(int argc,char *argv[])
 		 */
 		//count = CliqueCount(g,gsize);
 		count = best_count;
-#ifdef USE_TABOO
+//#ifdef USE_TABOO
 //		FIFOInsertEdge(taboo_list,best_i,best_j);
 		FIFOInsertEdgeCount(taboo_list,best_i,best_j,count);
 		if (best_k != -1)
 			FIFOInsertEdgeCount(taboo_list,best_i,best_k,count);
 		if (best_l != -1)
 			FIFOInsertEdgeCount(taboo_list,best_i,best_l,count);
-#endif
+//#endif
 		printf("ce size: %d, best_count: %d, best edges: (%d,%d) (%d,%d) (%d,%d), new colors: %d %d\n",
 			gsize,
 			best_count,
@@ -625,6 +858,7 @@ main(int argc,char *argv[])
 			best_l,
 			g[best_i*gsize+best_j],
 			g[best_i*gsize+best_k]);
+
 		fflush(stdout);
 		g_latest = g;
 		g_size_latest = gsize;
@@ -633,6 +867,7 @@ main(int argc,char *argv[])
 		 * rinse and repeat
 		 */
 	}
+  }
 
 	FIFODeleteGraph(taboo_list);
 
