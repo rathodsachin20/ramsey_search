@@ -12,6 +12,8 @@ import time
 clients = {}
 updates = { }
 ce = { }
+clientaddress = {}
+
 # Processing mesg
 def process_ce(data, conn):
     global ce
@@ -79,11 +81,13 @@ def process_update(data,conn):
 # To DO: to send algorithm that needs to be run on client
 def send_broadcast(graph, count):
     global clients
+    global clientaddress
+
     print "send broadcast to", clients
     size = len(graph)
-    for host,server_address in clients.iteritems():
-        print host, server_address
-        server_address1 = (server_address[0], int(server_address[1]))
+    for host in clientaddress:
+        server_address1 = clientaddress[host]
+        print server_address1
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect(server_address1)
         payload = { }
@@ -175,11 +179,15 @@ def main():
 
     SOCKET_LIST = []
     graph = {}
+    port = 3000
     #now keep talking with the client
     start_new_thread(check_for_broadcast,())
     while 1:
     #wait to accept a connection - blocking call
         conn, addr = s.accept()
+        if clientaddress.has_key(addr[0]) == False:
+            clientaddress[ addr[0] ] = (addr[0], port )
+        
         print 'Connected with ' + addr[0] + ':' + str(addr[1])
      
         start_new_thread(clientthread ,(conn,))

@@ -109,7 +109,7 @@ def act_on_broadcast():
         broadcast["host_name"] = socket.gethostname()
         broadcast["msg_type"] = "broadcast"
         broadcast["ip"] = "localhost"
-        broadcast["port"] = "8899"
+        broadcast["port"] = "3000"
         sock.send(json.dumps(broadcast))
         data = json.loads(sock.recv(1024).strip())
         if data["return"] == "ok":
@@ -123,7 +123,7 @@ def act_on_broadcast():
   
 
     HOST = 'localhost'   # Symbolic name meaning all available interfaces
-    PORT = 8899 # Arbitrary non-privileged port
+    PORT = 3000 # Arbitrary non-privileged port
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print 'Broadcast Socket created'
     #Bind socket to local host and port
