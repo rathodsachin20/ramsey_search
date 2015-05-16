@@ -198,6 +198,118 @@ int* PaleyGraph(gsize){
 }
 
 
+    int
+ReadGraph(char *fname,
+        int **g,
+        int *gsize)
+{
+    int i;
+    int j;
+    FILE *fd;
+    int lsize;
+    int *lg;
+    char line_buff[255];
+    char *curr;
+    char *err;
+    char *tempc;
+    int lcount;
+
+    fd = fopen(fname,"r");
+    if(fd == 0)
+    {
+        fprintf(stderr,"ReadGraph cannot open file %s\n",fname);
+        fflush(stderr);
+        return(0);
+    }
+
+    fgets(line_buff,254,fd);
+    if(feof(fd))
+    {
+        fprintf(stderr,"ReadGraph eof on size\n");
+        fflush(stderr);
+           fclose(fd);
+        return(0);
+    }
+    tempc = line_buff;
+    lsize = (int)strtol(tempc,&tempc,10);
+    if((lsize < 0) || (lsize > MAXSIZE))
+    {
+        fprintf(stderr,"ReadGraph size bad, read: %d, max: %d\n",
+                lsize,MAXSIZE);
+        fflush(stderr);
+        fclose(fd);
+        return(0);
+    }
+
+    lg = (int *)malloc(lsize*lsize*sizeof(int));
+    if(lg == NULL)
+    {
+        fprintf(stderr,"ReadGraph: no space\n");
+        fflush(stderr);
+        return(0);
+    }
+
+    memset(lg,0,lsize*lsize*sizeof(int));
+
+    for(i=0; i < lsize; i++)
+    {
+        if(feof(fd))
+        {
+                             break;
+        }
+        err = fgets(line_buff,254,fd);
+        if(err == NULL)
+        {
+            break;
+        }
+        curr = line_buff;
+        for(j=0; j < lsize; j++)
+        {
+            sscanf(curr,"%d ",&(lg[i*lsize+j]));
+            if((lg[i*lsize+j] != 1) &&
+                    (lg[i*lsize+j] != 0))
+            {
+                fprintf(stderr,
+                        "ReadGraph: non-boolean value read: %d\n",
+                        lg[i*lsize+j]);
+                fflush(stderr);
+                fclose(fd);
+                return(0);
+            }
+            while(isdigit(*curr))
+                curr++;
+            while(isspace(*curr))
+                curr++;
+        }
+    }
+
+    if(i < lsize)
+    {
+        fprintf(stderr,"ReadGraph file too short, lsize: %d\n",lsize);
+        fflush(stderr);
+        fclose(fd);
+        return(0);
+    }
+
+    fclose(fd);
+
+    *g = lg;
+    *gsize = lsize;
+    return(1);
+}
+
+                           
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -244,7 +356,7 @@ main(int argc,char *argv[])
 		}
 	//	PrintGraph(g, gsize);
 
-	} else {
+	} else if (argc == 2) {
 
 		gsize = atoi(argv[1]);
 		g = (int *)malloc(gsize*gsize*sizeof(int));
@@ -253,6 +365,16 @@ main(int argc,char *argv[])
         	}
 		g = PaleyGraph(gsize);
 	}
+    else {
+        char graphfile[256];
+        strcpy(graphfile, argv[2]);
+        gsize = atoi(argv[1]);
+        //printf("gsize=%d", gsize);
+        g = (int *)malloc(gsize*gsize*sizeof(int));
+        ReadGraph(graphfile, &g, &gsize);
+        printf("\nStarting from given graph of size %d\n.", gsize);
+        fflush(stdout);
+    }
 	/*
 	 *make a fifo to use as the taboo list
 	 */
@@ -278,7 +400,7 @@ main(int argc,char *argv[])
 		 */
 		if(count == 0)
 		{
-			printf("Eureka! i Counter-example found!\n");
+		//	printf("Eureka! i Counter-example found!\n");
 			sprintf(fname,"solutions/CE-%d.txt",gsize);
 			fp = fopen(fname,"w");
 			char *key;
@@ -401,7 +523,7 @@ main(int argc,char *argv[])
 //		FIFOInsertEdge(taboo_list,best_i,best_j);
 		FIFOInsertEdgeCount(taboo_list,best_i,best_j,count);
 		FIFOInsertEdgeCount(taboo_list,best_i,best_k,count);
-
+/*
 		printf("ce size: %d, best_count: %d, best edges: (%d,%d) (%d,%d), new colors: %d %d\n",
 			gsize,
 			best_count,
@@ -411,24 +533,18 @@ main(int argc,char *argv[])
 			best_k,
 			g[best_i*gsize+best_j],
 			g[best_i*gsize+best_k]);
-		
+*/	
+        /* write update to file */	
 	    sprintf(fname,"solutions/CE-%d-upd.txt",gsize);
         sprintf(bc,"%d",best_count);
-        //fd = open(fname,O_CREAT | O_TRUNC);
         fp = fopen(fname, "w+");
         if (fp == NULL) {
-            printf("\n Yakaapa \n");
+            printf("\n Ah file error ? \n");
             exit(0);
     
         }
         fd = fileno(fp);
-        printf("\nfd is %d", fd);
         ftruncate(fd, 0);
-        if (fp == NULL) {
-            printf("\n WHy ?? \n");
-            exit(0);
-        }
-		     
         PrintGraph(g,gsize,fp, bc);
 	    fclose(fp);	
 		/*

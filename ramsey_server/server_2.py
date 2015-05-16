@@ -141,7 +141,7 @@ def check_for_broadcast():
                 min_best_count = best_count
                 best_update_graph = updates[client]["current_graph"]
                 graph_update_size = updates[client]["gsize"]     
-
+        ''' Need to modify this to suit more clients '''
         if graph_update_size > best_ce_graph:
             graph_to_update = best_update_graph
             send_broadcast(graph_to_update, min_best_count)
@@ -149,7 +149,7 @@ def check_for_broadcast():
             graph_to_update = best_ce_graph
             send_broadcast(graph_to_update, max_CE)
 
-        time.sleep(10)
+        time.sleep(300 * 3)
           
 
 def main():

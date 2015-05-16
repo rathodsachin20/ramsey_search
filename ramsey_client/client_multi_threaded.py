@@ -9,7 +9,7 @@ import signal
 # Create a TCP/IP socket
 #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-ramsey_pid = 99
+ramsey_pid = 0
 server_address = ('localhost', 8888)
 def poll_for_CE():
 # Connect the socket to the port where the server is listening
@@ -22,8 +22,8 @@ def poll_for_CE():
     json_CE["msg_type"] = "counter-example"
     json_CE["client"] = socket.gethostname()
 
-    count = 12;
-    while count < 15:
+    count = 101
+    while count < 135:
         fname = "solutions/CE-" + str(count) + ".txt"
 	
         if not os.path.exists(fname):
@@ -60,8 +60,8 @@ def poll_for_updates():
     json_upd = {}
     json_upd["msg_type"] = "update"
     json_upd["host_name"] = socket.gethostname()
-    count = 12	
-    while count < 17:
+    count = 101	
+    while count < 130:
         fname = "solutions/CE-" + str(count) + "-upd.txt"
         print fname
 
@@ -155,38 +155,51 @@ def act_on_broadcast():
         print "recieved graph", graph
         conn.send(json.dumps({"return":"ok"}))
         #write graph to a file. start a new ramsey_search
-        write_graph_to_file(graph, gsize)
-        if ramsey_pid != 0:
-            #os.kill(ramsey_pid, signal.SIGKILL)
-            start_ramsey_search(graph,gsize)
-            ramsey_pid = 0
+        fname = write_graph_to_file(graph, gsize)
+        print "killing process" + str(ramsey_pid)
+        os.kill(ramsey_pid, signal.SIGKILL)
+        start_ramsey_search(fname,gsize)
         
     s.close()
         
     
 
 def write_graph_to_file(graph, gsize):
-    f = open("graph-" + str(gsize) + ".txt","w")
+    fname = "graph-" + str(gsize) + ".txt"
+    f = open(fname,"w")
     f.write(str(gsize) + "\n")
     f.write(graph)
     f.close() 
+    return fname
 
-
-def start_ramsey_search(graph, size):
+''' input parameters constant ???'''
+def start_ramsey_search(fname, size):
     global ramsey_pid
-    argument = 'size graph-'+ str(size) + '.txt'
-    fname = 'multi-flip' + str(size) + '.log'
-    fout = open(fname,"w")
-    proc = subprocess.Popen([ './ramsey_multi_flip_3', argument], shell=True, stdout=fout, stderr=fout)
+    executable = './ramsey_multi_flip ' +  str(size) + ' ' + fname
+    print executable  
+    proc = subprocess.Popen(executable, shell=True)
     time.sleep(1) # some buffer !!!
     ramsey_pid = proc.pid
     print ramsey_pid
 
 
+''' for now starts with 101'''
+def bootstrap_ramsey(size):
+    global ramsey_pid
+    argument = size
+    executable = './ramsey_multi_flip ' + size
+    print executable
+    proc = subprocess.Popen( executable, shell=True)
+    time.sleep(1) # some buffer !!!
+    ramsey_pid = proc.pid
+    print "bootstrapping done with pid %d " % ramsey_pid
 
 threads = []
 if  __name__ == "__main__":
     os.system("mkdir -p solutions/")
+    bootstrap_ramsey("101")
+
+
     thread1 = Thread(target = poll_for_CE)
     thread2 = Thread(target = poll_for_updates)
     thread3 = Thread(target = act_on_broadcast)
