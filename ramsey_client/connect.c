@@ -111,7 +111,7 @@ void socket_upload_2(int sock, int x, int y, int count, int gsize, int *g)
 {
 	if(sock == -1)
 		return;
-
+    int i = 0;
 	printf("Uploading graph -2 \n");
 	char *key;
 	MakeGraphKey(g,gsize,&key);
@@ -134,7 +134,7 @@ void socket_upload_2(int sock, int x, int y, int count, int gsize, int *g)
 
 	if( strstr(buf, "graph") !=NULL ){
 		printf("updating...\n");
-		for(int i=0; i<5 || len > 1024; i++)
+		for( i=0; i<5 || len > 1024; i++)
 		{
 			bzero(buf, 1024);
 			len = read(sock, buf, 1024);
@@ -146,7 +146,7 @@ void socket_upload_2(int sock, int x, int y, int count, int gsize, int *g)
 	printf("sent.\n");
 	free(key);
 }
-
+/*
 void* wait_for_server(void *arg)
 {
 	int sock = *((int *) arg);
@@ -179,10 +179,11 @@ void* wait_for_server(void *arg)
          
     return 0;
 }
-
+*/
 /*
 * This function recieves messages from the master node and performs instructions accordingly
 */
+/*
 void create_fifo_thread(int *sockPtr)
 {
 	pthread_t tid;
@@ -192,4 +193,5 @@ void create_fifo_thread(int *sockPtr)
     else
         printf("\n Thread created successfully\n");
 }
+*/
 

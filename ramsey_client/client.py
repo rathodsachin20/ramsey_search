@@ -18,13 +18,30 @@ json_upd = {}
 
 json_CE["msg_type"] = "counter-example"
 json_CE["client"] = socket.gethostname()
-count = 8;
+
+json_upd["msg_type"] = "update"
+json_upd["client"] = socket.gethostname()
+
+count = 170;
 while count < 206:
 	fname = "solutions/CE-" + str(count) + ".txt"
 	
 	if not os.path.exists(fname):
 		print fname
-		time.sleep(10)
+		#time.sleep(10)
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		sock.connect(server_address)
+		fname = "solutions/CE-" + "29" + ".txt"
+		f = open(fname,"r")
+		line = f.readline()
+		data = f.read()
+		print data
+		sock.send(data)
+		data = sock.recv(1024).strip()
+		if data:
+			print "server sent", data	
+		sock.close()	
+		break
 		continue	
 
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

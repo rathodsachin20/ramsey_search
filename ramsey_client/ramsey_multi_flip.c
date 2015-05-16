@@ -3,13 +3,16 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "fifo.h"	/* for taboo list */
 
 
 #define MAXSIZE (541)
 
-#define TABOOSIZE (8000)
+#define TABOOSIZE (1000)
 #define BIGCOUNT (9999999)
 
 /***
@@ -27,20 +30,20 @@
  *
  * prints in the right format for the read routine
  */
-void PrintGraph(int *g, int gsize)
+void PrintGraph(int *g, int gsize,FILE *fp, char *key)
 {
 	int i;
 	int j;
 
-	fprintf(stdout,"%d\n",gsize);
-
+	fprintf(fp,"%d",gsize);
+	fprintf(fp," %s\n",key);
 	for(i=0; i < gsize; i++)
 	{
 		for(j=0; j < gsize; j++)
 		{
-			fprintf(stdout,"%d ",g[i*gsize+j]);
+			fprintf(fp,"%d ",g[i*gsize+j]);
 		}
-		fprintf(stdout,"\n");
+		fprintf(fp,"\n");
 	}
 
 	return;
@@ -213,6 +216,10 @@ main(int argc,char *argv[])
 	int best_k;
 	void *taboo_list;
 	int val,iter,jter;
+	char fname[255];
+	FILE *fp;
+    char bc[255];
+    int fd;
 	/*
 	 * start with graph of size 8
 	 */
@@ -235,7 +242,7 @@ main(int argc,char *argv[])
 				val = 1 - val; 
 			}
 		}
-		PrintGraph(g, gsize);
+	//	PrintGraph(g, gsize);
 
 	} else {
 
@@ -258,6 +265,7 @@ main(int argc,char *argv[])
 	/*
 	 * while we do not have a publishable result
 	 */
+    
 	while(gsize < 206)
 	{
 		/*
@@ -270,8 +278,15 @@ main(int argc,char *argv[])
 		 */
 		if(count == 0)
 		{
-			printf("Eureka!  Counter-example found!\n");
-			PrintGraph(g,gsize);
+			printf("Eureka! i Counter-example found!\n");
+			sprintf(fname,"solutions/CE-%d.txt",gsize);
+			fp = fopen(fname,"w");
+			char *key;
+			(void)MakeGraphKey(g,gsize,&key);
+		
+			PrintGraph(g,gsize,fp, key);
+			fclose(fp);	
+			free(key);
 			/*
 			 * make a new graph one size bigger
 			 */
@@ -396,7 +411,26 @@ main(int argc,char *argv[])
 			best_k,
 			g[best_i*gsize+best_j],
 			g[best_i*gsize+best_k]);
-
+		
+	    sprintf(fname,"solutions/CE-%d-upd.txt",gsize);
+        sprintf(bc,"%d",best_count);
+        //fd = open(fname,O_CREAT | O_TRUNC);
+        fp = fopen(fname, "w+");
+        if (fp == NULL) {
+            printf("\n Yakaapa \n");
+            exit(0);
+    
+        }
+        fd = fileno(fp);
+        printf("\nfd is %d", fd);
+        ftruncate(fd, 0);
+        if (fp == NULL) {
+            printf("\n WHy ?? \n");
+            exit(0);
+        }
+		     
+        PrintGraph(g,gsize,fp, bc);
+	    fclose(fp);	
 		/*
 		 * rinse and repeat
 		 */
