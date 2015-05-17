@@ -10,19 +10,17 @@ import signal
 #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 ramsey_pid = 0
-server_address = ('localhost', 8888)
+server_address = ()
 def poll_for_CE():
-# Connect the socket to the port where the server is listening
+    # Connect the socket to the port where the server is listening
     global server_address
     print >>sys.stderr, 'connecting to %s port %s' % server_address
-
-#sock.connect(server_address)
 
     json_CE = {}
     json_CE["msg_type"] = "counter-example"
     json_CE["client"] = socket.gethostname()
 
-    count = 101
+    count = 8
     while count < 135:
         fname = "solutions/CE-" + str(count) + ".txt"
 	
@@ -60,10 +58,10 @@ def poll_for_updates():
     json_upd = {}
     json_upd["msg_type"] = "update"
     json_upd["host_name"] = socket.gethostname()
-    count = 101	
-    while count < 130:
+    count = 8	
+    while count < 135:
         fname = "solutions/CE-" + str(count) + "-upd.txt"
-        print fname
+        #print fname
 
         if not os.path.exists(fname):
             fname = "solutions/CE-" + str(count) + ".txt" 
@@ -71,7 +69,8 @@ def poll_for_updates():
                 count += 1
             else:
                 time.sleep(10)
-            continue	
+            continue
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect(server_address)
         f = open(fname,"r")
@@ -100,8 +99,8 @@ def poll_for_updates():
 def act_on_broadcast():
     global server_address
     global ramsey_pid
-    print "yeah broadcast"
     broadcast = {}
+
     while True:
    # Register with the server to recieve broadcast messages
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)	
@@ -109,7 +108,7 @@ def act_on_broadcast():
         broadcast["host_name"] = socket.gethostname()
         broadcast["msg_type"] = "broadcast"
         broadcast["ip"] = "localhost"
-        broadcast["port"] = "3000"
+        broadcast["port"] = "8899"
         sock.send(json.dumps(broadcast))
         data = json.loads(sock.recv(1024).strip())
         if data["return"] == "ok":
@@ -120,19 +119,17 @@ def act_on_broadcast():
             
     sock.close()
 
-  
-
-    HOST = 'localhost'   # Symbolic name meaning all available interfaces
-    PORT = 3000 # Arbitrary non-privileged port
+    HOST = "0.0.0.0"   
+    PORT = 8899 # Arbitrary non-privileged port
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print 'Broadcast Socket created'
+    print "Broadcast Socket created"
     #Bind socket to local host and port
     try:
         s.bind((HOST, PORT))
     except socket.error as msg:
-        print 'Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
+        print "Bind failed. Error Code : " + str(msg[0]) + " Message " + msg[1]
         exit()
-    print 'Socket bind complete, listen now'
+    print "Socket bind complete, listen now"
     #Start listening on socket
     s.listen(10)
 
@@ -140,8 +137,8 @@ def act_on_broadcast():
     #wait to accept a connection - blocking call
         conn, addr = s.accept()
         print 'Connected with ' + addr[0] + ':' + str(addr[1])
-         #Handle broadcast message from server. Kill ramsey search and start
-          #  a new one with new graph. Update the new process pid 
+        '''Handle broadcast message from server. Kill ramsey search and start
+           a new one with new graph. Update the new process pid''' 
 
         graph = {}
         data = json.loads(conn.recv(1024))
@@ -154,13 +151,14 @@ def act_on_broadcast():
         
         print "recieved graph", graph
         conn.send(json.dumps({"return":"ok"}))
-        #write graph to a file. start a new ramsey_search
+        '''write graph to a file. start a new ramsey_search'''
         fname = write_graph_to_file(graph, gsize)
-        print "killing process" + str(ramsey_pid)
+        print "killing process " + str(ramsey_pid)
         os.kill(ramsey_pid, signal.SIGKILL)
         start_ramsey_search(fname,gsize)
-        
+
     s.close()
+
         
     
 
@@ -194,11 +192,24 @@ def bootstrap_ramsey(size):
     ramsey_pid = proc.pid
     print "bootstrapping done with pid %d " % ramsey_pid
 
+
+
+
+
+
 threads = []
 if  __name__ == "__main__":
-    os.system("mkdir -p solutions/")
-    bootstrap_ramsey("101")
+    global server_aiddress
+    if len(sys.argv) < 2:
+        print "Usage " + sys.argv[0] + "(server_ip/DNS name)"
+        sys.exit(1)      
 
+    os.system("mkdir -p solutions/")
+    bootstrap_ramsey("8")
+    port = 8888
+    server_address = server_address + (sys.argv[1], port)
+
+    print server_address
 
     thread1 = Thread(target = poll_for_CE)
     thread2 = Thread(target = poll_for_updates)
