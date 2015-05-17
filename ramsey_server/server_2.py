@@ -38,7 +38,6 @@ def update_client_list(data,conn):
     clients[data["host_name"]] = (data["ip"],int(data["port"]))
     conn.send(json.dumps({"return":"ok"}))
 
-#Function for handling connections. This will be used to create threads
 def clientthread(conn):
     while True:
         data = conn.recv(1024).strip()
@@ -76,7 +75,7 @@ def process_update(data,conn):
     updates[hostname]["current_graph"] = graph
     updates[hostname]["current_gsize"] = data["gsize"]
      
-    print updates
+#    print updates
    
 # To DO: to send algorithm that needs to be run on client
 def send_broadcast(graph, count):
@@ -87,14 +86,22 @@ def send_broadcast(graph, count):
     size = len(graph)
     for host in clientaddress:
         server_address1 = clientaddress[host]
-        print server_address1
+        print "server adress is :",server_address1
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect(server_address1)
+        ''' ensures server is listening on the other side -> synchronization'''
+        while True:
+            try:
+                sock.connect((server_address1[0], server_address1[1]))
+                break
+            except socket.error, msg:
+                print "Couldnt connect with the socket-server: %s\n retrying again" % msg
+                continue
+
         payload = { }
         payload["gsize"] = count
         payload["gsize_bytes"] = size
         print "payload", payload
-        sock.send(json.dumps(payload))
+        sock.sendall(json.dumps(payload))
         print "sent broadcast payload"
         data = sock.recv(1024).strip()
         print "beforre",data
@@ -102,7 +109,7 @@ def send_broadcast(graph, count):
         print"after data", data
         if data["return"] == "ok":
             print "sending graph pa"
-            sock.send(graph)
+            sock.sendall(graph)
             data = sock.recv(1024).strip()
             data = json.loads(data)
             if data["return"] == "ok":
@@ -130,7 +137,7 @@ def check_for_broadcast():
         for client in clients:
             if ce.has_key(client) == False:
                 continue
-            print "ce dict ce,ce var",ce,ce[client]["ce_size"]
+           # print "ce dict ce,ce var",ce,ce[client]["ce_size"]
             ce_count = ce[client]["ce_size"]
             if ce_count > max_CE:
                 max_CE = ce_count
@@ -144,21 +151,22 @@ def check_for_broadcast():
             if best_count > min_best_count:
                 min_best_count = best_count
                 best_update_graph = updates[client]["current_graph"]
-                graph_update_size = updates[client]["gsize"]     
+                graph_update_size = updates[client]["current_gsize"]     
         ''' Need to modify this to suit more clients '''
         if graph_update_size > best_ce_graph:
             graph_to_update = best_update_graph
             send_broadcast(graph_to_update, min_best_count)
         else:
+            print "Its CE again\n"
             graph_to_update = best_ce_graph
             send_broadcast(graph_to_update, max_CE)
 
-        time.sleep(300 * 3)
+        time.sleep(3)
           
 
 def main():
     # replace this by sock.gethostname()
-    HOST = 'localhost'   # Symbolic name meaning all available interfaces
+    HOST = '0.0.0.0'   # Symbolic name meaning all available interfaces
     PORT = 8888 # Arbitrary non-privileged port
  
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -179,14 +187,14 @@ def main():
 
     SOCKET_LIST = []
     graph = {}
-    port = 3000
+    port = 8899
     #now keep talking with the client
     start_new_thread(check_for_broadcast,())
     while 1:
     #wait to accept a connection - blocking call
         conn, addr = s.accept()
         if clientaddress.has_key(addr[0]) == False:
-            clientaddress[ addr[0] ] = (addr[0], port )
+            clientaddress[addr[0]] = (addr[0], port)
         
         print 'Connected with ' + addr[0] + ':' + str(addr[1])
      
