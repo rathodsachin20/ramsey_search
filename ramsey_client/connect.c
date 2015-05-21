@@ -99,7 +99,10 @@ void PrintGraphToFile(int *g, int gsize, FILE * fout)
 	{
 		for(j=0; j < gsize; j++)
 		{
-			fprintf(fout,"%d ",g[i*gsize+j]);
+			if(g[i*gsize+j] == 0)
+				fprintf(fout,"0 ");
+			else
+				fprintf(fout,"1 ");
 		}
 		fprintf(fout,"\n");
 	}
@@ -168,7 +171,7 @@ void* wait_for_server(void *arg)
 	    {
 	        //end of string marker
 			client_message[read_size] = '\0';
-			
+				
 			//Send the message back to client
 			printf("Recieved !!!!! %s",client_message);
 			

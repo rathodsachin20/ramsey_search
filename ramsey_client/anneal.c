@@ -205,6 +205,81 @@ int CliqueCount(int *g,
 	return(count);
 }
 
+
+int CliqueCountChecker(int *g,
+		int gsize)
+{
+	int i;
+	int j;
+	int k;
+	int l;
+	int m;
+	int n;
+	int o;
+	int count=0;
+
+	for(i=0;i < gsize-sgsize+1; i++)
+	{
+		for(j=i+1;j < gsize-sgsize+2; j++)
+		{
+			for(k=j+1;k < gsize-sgsize+3; k++) 
+			{ 
+				if((g[i*gsize+j] == g[i*gsize+k]) && 
+						(g[i*gsize+j] == g[j*gsize+k]))
+				{
+					for(l=k+1;l < gsize-sgsize+4; l++) 
+					{ 
+						if((g[i*gsize+j] == g[i*gsize+l]) && 
+								(g[i*gsize+j] == g[j*gsize+l]) && 
+								(g[i*gsize+j] == g[k*gsize+l]))
+						{
+							for(m=l+1;m < gsize-sgsize+5; m++) 
+							{
+								if((g[i*gsize+j] == g[i*gsize+m]) && 
+										(g[i*gsize+j] == g[j*gsize+m]) &&
+										(g[i*gsize+j] == g[k*gsize+m]) && 
+										(g[i*gsize+j] == g[l*gsize+m])) {
+									for(n=m+1; n < gsize-sgsize+6; n++)
+									{
+										if((g[i*gsize+j]
+													== g[i*gsize+n]) &&
+												(g[i*gsize+j] 
+												 == g[j*gsize+n]) &&
+												(g[i*gsize+j] 
+												 == g[k*gsize+n]) &&
+												(g[i*gsize+j] 
+												 == g[l*gsize+n]) &&
+												(g[i*gsize+j] 
+												 == g[m*gsize+n])) {
+											for(o=n+1; o < gsize-sgsize+7; o++) {
+												if((g[i*gsize+j]
+															== g[i*gsize+o]) &&
+														(g[i*gsize+j] 
+														 == g[j*gsize+o]) &&
+														(g[i*gsize+j] 
+														 == g[k*gsize+o]) &&
+														(g[i*gsize+j] 
+														 == g[l*gsize+o]) &&
+														(g[i*gsize+j] 
+														 == g[m*gsize+o]) &&
+														(g[i*gsize+j] == 
+														 g[n*gsize+o])) {
+													count++;
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return(count);
+}
+
 /*
    PaleyGraph as starting point
  */
@@ -227,6 +302,32 @@ int* PaleyGraph(int gsize){
 			g[v1*gsize + v2] = 1;
 		}
 	}
+
+	return g;
+
+}
+
+/*
+   PaleyGraph as starting point
+ */
+int* RandomGraph(int gsize){
+	int i, k;
+	int *g = (int * )malloc(gsize * gsize * sizeof(int));
+	memset(g, 1, gsize * gsize);
+
+	for( i=0; i<gsize; i++){
+		for( k= 1; k< (gsize)/ 2; k++)
+		{
+			g[i*gsize +k] = (drand48() > 0.5 ? 1: 0);
+		}
+	}
+
+	/*for( i=0; i<gsize; i++){
+		for( k= 1; k< (gsize)/ 2; k++)
+		{
+			g[i*gsize +k] = 1- g[i*gsize +k] ;
+		}
+	}*/
 
 	return g;
 
@@ -276,16 +377,29 @@ int main(int argc,char *argv[])
 	int t=INITEM;
 	int sock = -1;
 
-	if(argc >= 2)
-	    sock = open_socket(argv[1]);
+	//if(argc >= 2)
+	//    sock = open_socket(argv[1]);
 
 	//create_fifo_thread(&sock);
 
 	/*
 	 * Starting with Paley size 101
 	 */
+	
+	/*
+	Paley Method
 	gsize = 13;
 	g = PaleyGraph(13);
+	
+	for(i=0; i<gsize; i++){
+		for(j=0; j<gsize; j++)
+			g[i*gsize +j] = 1 - g[i*gsize +j];
+	}
+
+	*/
+	gsize = 8;
+	g = RandomGraph(8);
+	
 
 	/*
 	 * make a fifo to use as the taboo list
@@ -298,11 +412,12 @@ int main(int argc,char *argv[])
 
 	int best_clique = INITEM;
 	int flag = 0; int min_count = BIGCOUNT;
+	int term = atoi(argv[1]);
 
 	/*
 	 * while we do not have a publishable result
 	 */
-	while(gsize < 200)
+	while(gsize <= term)
 	{
 
 		printf("Graph size is %d\n", gsize);
@@ -320,7 +435,19 @@ int main(int argc,char *argv[])
 			printf("Eureka!  Counter-example found!\n");
 			min_count = BIGCOUNT;
 
-			socket_upload_2(sock, -1, -1, count, gsize, g);
+			if(gsize == term)
+			{
+				FILE *fp;
+				char buf[100];			
+				bzero(buf, 100);
+				sprintf(buf, "graph%d_5.state", gsize);
+				printf("Filename: %s", buf);
+				fp = fopen(buf, "w+");
+				PrintGraphToFile(g, gsize, fp);
+				fclose(fp);
+			}
+
+			//socket_upload_2(sock, -1, -1, count, gsize, g);
 			
 
 			/*
@@ -465,7 +592,7 @@ int main(int argc,char *argv[])
 			t=INITEM;
 		}
 
-		socket_upload_2(sock, gt[0], gt[1], count, gsize, g);
+		//socket_upload_2(sock, gt[0], gt[1], count, gsize, g);
 		printf("size: %d, temperature: %d, count: %d, best_clique: %d\n", gsize, t, count, best_clique);
 
 		free(cliques);

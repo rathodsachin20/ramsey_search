@@ -41,9 +41,9 @@ main(int argc,char *argv[])
 		exit(1);
 	}
 
-	PrintGraph(g,gsize);
+	//PrintGraph(g,gsize);
 	
-	count = CliqueCount(g,gsize);
+	count = CEChecker(g,gsize);//CliqueCount(g,gsize);
 	if(count == 0)
 	{
 		fprintf(stdout,

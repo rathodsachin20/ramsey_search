@@ -85,10 +85,7 @@ void sig_handler(int signum){
  * out parameters.  The space for the file is malloced and the routine
  * is not thread safe.  Returns 1 on success and 0 on failure.
  */
-	int
-ReadGraph(char *fname,
-		int **g,
-		int *gsize)
+int ReadGraph(char *fname,int **g,int *gsize)
 {
 	int i;
 	int j;
@@ -373,6 +370,7 @@ main(int argc,char *argv[])
 	int best_l;
 	void *taboo_list;
 	int val,iter,jter;
+	
 	/*
 	 * start with graph of size 8
 	 */
@@ -427,11 +425,12 @@ main(int argc,char *argv[])
                 exit(1);
         }
 
+	int term = 64;
 
 	/*
 	 * while we do not have a publishable result
 	 */
-	while(gsize < 206)
+	while(gsize <= term)
 	{
 		/*
 		 * find out how we are doing
@@ -444,7 +443,19 @@ main(int argc,char *argv[])
 		if(count == 0)
 		{
 			printf("Eureka!  Counter-example found!\n");
-			PrintGraph(g,gsize);
+			
+			if(gsize == term)
+			{
+				FILE *fp;
+				char buf[100];			
+				bzero(buf, 100);
+				sprintf(buf, "graph%d_3.state", gsize);
+				printf("Filename: %s", buf);
+				fp = fopen(buf, "w+");
+				PrintGraphToFile(g, gsize, fp);
+				fclose(fp);
+			}
+
 			fflush(stdout);
 			/*
 			 * make a new graph one size bigger
