@@ -9,10 +9,11 @@
 //#include "graph_utils.h"
 
 #define USE_TABOO
+
 #define MAXSIZE (541)
+
 #define TABOOSIZE (1000)
 #define BIGCOUNT (9999999)
-#define ARGS "f:"
 
 int* g_latest = NULL;
 int g_size_latest = 1;
@@ -84,7 +85,10 @@ void sig_handler(int signum){
  * out parameters.  The space for the file is malloced and the routine
  * is not thread safe.  Returns 1 on success and 0 on failure.
  */
-int ReadGraph(char *fname,int **g,int *gsize)
+	int
+ReadGraph(char *fname,
+		int **g,
+		int *gsize)
 {
 	int i;
 	int j;
@@ -369,29 +373,52 @@ main(int argc,char *argv[])
 	int best_l;
 	void *taboo_list;
 	int val,iter,jter;
-	
-	char Fname[255];	
-	char c;
-	while((c = getopt(argc,argv,ARGS)) != EOF)
-	{
-		switch(c)
-		{
-			case 'f':
-				strncpy(Fname,optarg,sizeof(Fname));
-				break;
-			default:
-				fprintf(stderr,
-				"test_clique_count  unrecognized argument: %c\n",c);
-				fflush(stderr);
-				break;
+	/*
+	 * start with graph of size 8
+	 */
+
+	if (argc < 2) {
+		gsize = 8;
+		g = (int *)malloc(gsize*gsize*sizeof(int));
+		if(g == NULL) {
+			exit(1);
 		}
+
+	/*
+	 * start out with all zeros
+	 */
+		memset(g,0,gsize*gsize*sizeof(int));
+		val = 0, iter = 0, jter=0;
+		for( iter=0; iter<gsize; iter++){
+			for( jter = 0; jter< gsize; jter++){
+				g[iter*gsize + jter]  = val;
+				val = 1 - val; 
+			}
+		}
+		PrintGraph(g, gsize);
+
+	} else if (argc == 2) {
+
+		gsize = atoi(argv[1]);
+		g = (int *)malloc(gsize*gsize*sizeof(int));
+		if(g == NULL) {
+			exit(1);
+        	}
+		g = PaleyGraph(gsize);
+		printf("Starting from Paley graph of size %d\n.", gsize);
+		fflush(stdout);
+	}
+	else {
+		char graphfile[256];
+		strcpy(graphfile, argv[2]);
+		gsize = atoi(argv[1]);
+		//printf("gsize=%d", gsize);
+		g = (int *)malloc(gsize*gsize*sizeof(int));
+		ReadGraph(graphfile, &g, &gsize);
+		printf("Starting from given graph of size %d\n.", gsize);
+		fflush(stdout);
 	}
 
-	if(!ReadGraph(Fname,&g,&gsize))
-	{
-		gsize = 8;
-		g = PaleyGraph(8);
-	}
 	/*
 	 *make a fifo to use as the taboo list
 	 */
@@ -400,12 +427,11 @@ main(int argc,char *argv[])
                 exit(1);
         }
 
-	int term = 64;
 
 	/*
 	 * while we do not have a publishable result
 	 */
-	while(gsize <= term)
+	while(gsize < 206)
 	{
 		/*
 		 * find out how we are doing
@@ -418,16 +444,7 @@ main(int argc,char *argv[])
 		if(count == 0)
 		{
 			printf("Eureka!  Counter-example found!\n");
-			
-			FILE *fp;
-			char buf[100];			
-			bzero(buf, 100);
-			sprintf(buf, "graph%d.state", gsize);
-			printf("Filename: %s", buf);
-			fp = fopen(buf, "w+");
-			PrintGraphToFile(g, gsize, fp);
-			fclose(fp);
-
+			PrintGraph(g,gsize);
 			fflush(stdout);
 			/*
 			 * make a new graph one size bigger
