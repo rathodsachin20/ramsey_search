@@ -4,7 +4,6 @@
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
-
 #include "fifo.h"	/* for taboo list */
 //#include "graph_utils.h"
 
