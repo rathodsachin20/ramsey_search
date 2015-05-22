@@ -285,7 +285,7 @@ int main(int argc,char *argv[])
 	PrintGraph(g, gsize);
 
 	int flag = 0;
-	int term = atoi(argc[1])
+	int term = atoi(argv[1]);
 	/*
 	 * while we do not have a publishable result
 	 */

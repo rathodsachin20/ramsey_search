@@ -9,11 +9,10 @@
 //#include "graph_utils.h"
 
 #define USE_TABOO
-
 #define MAXSIZE (541)
-
 #define TABOOSIZE (1000)
 #define BIGCOUNT (9999999)
+#define ARGS "f:"
 
 int* g_latest = NULL;
 int g_size_latest = 1;
@@ -371,52 +370,28 @@ main(int argc,char *argv[])
 	void *taboo_list;
 	int val,iter,jter;
 	
-	/*
-	 * start with graph of size 8
-	 */
+	char Fname[255];	
+	char c;
+	while((c = getopt(argc,argv,ARGS)) != EOF)
+	{
+		switch(c)
+		{
+			case 'f':
+				strncpy(Fname,optarg,sizeof(Fname));
+				break;
+			default:
+				fprintf(stderr,
+				"test_clique_count  unrecognized argument: %c\n",c);
+				fflush(stderr);
+				break;
+		}
+	}
 
-	if (argc < 2) {
+	if(!ReadGraph(Fname,&g,&gsize))
+	{
 		gsize = 8;
-		g = (int *)malloc(gsize*gsize*sizeof(int));
-		if(g == NULL) {
-			exit(1);
-		}
-
-	/*
-	 * start out with all zeros
-	 */
-		memset(g,0,gsize*gsize*sizeof(int));
-		val = 0, iter = 0, jter=0;
-		for( iter=0; iter<gsize; iter++){
-			for( jter = 0; jter< gsize; jter++){
-				g[iter*gsize + jter]  = val;
-				val = 1 - val; 
-			}
-		}
-		PrintGraph(g, gsize);
-
-	} else if (argc == 2) {
-
-		gsize = atoi(argv[1]);
-		g = (int *)malloc(gsize*gsize*sizeof(int));
-		if(g == NULL) {
-			exit(1);
-        	}
-		g = PaleyGraph(gsize);
-		printf("Starting from Paley graph of size %d\n.", gsize);
-		fflush(stdout);
+		g = PaleyGraph(8);
 	}
-	else {
-		char graphfile[256];
-		strcpy(graphfile, argv[2]);
-		gsize = atoi(argv[1]);
-		//printf("gsize=%d", gsize);
-		g = (int *)malloc(gsize*gsize*sizeof(int));
-		ReadGraph(graphfile, &g, &gsize);
-		printf("Starting from given graph of size %d\n.", gsize);
-		fflush(stdout);
-	}
-
 	/*
 	 *make a fifo to use as the taboo list
 	 */
@@ -444,17 +419,14 @@ main(int argc,char *argv[])
 		{
 			printf("Eureka!  Counter-example found!\n");
 			
-			if(gsize == term)
-			{
-				FILE *fp;
-				char buf[100];			
-				bzero(buf, 100);
-				sprintf(buf, "graph%d_3.state", gsize);
-				printf("Filename: %s", buf);
-				fp = fopen(buf, "w+");
-				PrintGraphToFile(g, gsize, fp);
-				fclose(fp);
-			}
+			FILE *fp;
+			char buf[100];			
+			bzero(buf, 100);
+			sprintf(buf, "graph%d.state", gsize);
+			printf("Filename: %s", buf);
+			fp = fopen(buf, "w+");
+			PrintGraphToFile(g, gsize, fp);
+			fclose(fp);
 
 			fflush(stdout);
 			/*
