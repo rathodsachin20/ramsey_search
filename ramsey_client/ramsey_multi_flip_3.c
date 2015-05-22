@@ -13,11 +13,11 @@
 #define MAXSIZE (541)
 
 #define TABOOSIZE (1000)
-#define BIGCOUNT (9999999)
+#define BIGCOUNT (9999999999)
 
 int* g_latest = NULL;
 int g_size_latest = 1;
-int g_count_latest = BIGCOUNT;
+long g_count_latest = BIGCOUNT;
 
 
 /***
@@ -61,19 +61,22 @@ void sig_handler(int signum){
 	//sprintf(str_num, "%d.%d", g_size_latest, g_count_latest);
 	//strcat(filename, str_num);
 	if(g_latest != NULL){
-		printf("Printing current graph with size: %d and count: %d\n", g_size_latest, g_count_latest);
+		printf("Printing current graph with size: %d and count: %ld\n", g_size_latest, g_count_latest);
 		PrintGraph(g_latest, g_size_latest);
+		fflush(stdout);
 	}
 	else {
 		printf("No graph to print :(\n");
 	}
 	if(signum == SIGINT){
 		printf("Continuing execution.\n");
+		fflush(stdout);
 		return;
 	}
 	else if (signum == SIGTERM){
 		printf("Exiting.\n");
 		exit(signum);
+		fflush(stdout);
 	}
 }
 
@@ -95,7 +98,7 @@ ReadGraph(char *fname,
 	FILE *fd;
 	int lsize;
 	int *lg;
-	char line_buff[255];
+	char line_buff[511];
 	char *curr;
 	char *err;
 	char *tempc;
@@ -109,7 +112,7 @@ ReadGraph(char *fname,
 		return(0);
 	}
 
-	fgets(line_buff,254,fd);
+	fgets(line_buff,510,fd);
 	if(feof(fd))
 	{
 		fprintf(stderr,"ReadGraph eof on size\n");
@@ -118,7 +121,7 @@ ReadGraph(char *fname,
 		return(0);
 	}	
 	i = 0;
-	while((i < 254) && !isdigit(line_buff[i]))
+	while((i < 510) && !isdigit(line_buff[i]))
 		i++;
 
 	/*
@@ -158,7 +161,7 @@ ReadGraph(char *fname,
 		{
 			break;
 		}
-		err = fgets(line_buff,254,fd);
+		err = fgets(line_buff,510,fd);
 		if(err == NULL)
 		{
 			break;
@@ -239,7 +242,7 @@ void CopyGraph(int *old_g, int o_gsize, int *new_g, int n_gsize)
  *** only checks values above diagonal
  */
 
-int CliqueCount(int *g,
+long CliqueCount(int *g,
 	     int gsize)
 {
     int i;
@@ -249,7 +252,7 @@ int CliqueCount(int *g,
     int m;
     int n;
     int o;
-    int count=0;
+    long count=0;
     int sgsize = 7;
     
     for(i=0;i < gsize-sgsize+1; i++)
@@ -360,13 +363,13 @@ main(int argc,char *argv[])
 	int *g;
 	int *new_g;
 	int gsize;
-	int count;
-	int count_1;
-	int count_2;
-	int count_3;
+	long count;
+	long count_1;
+	long count_2;
+	long count_3;
 	int i;
 	int j;
-	int best_count;
+	long best_count;
 	int best_i;
 	int best_j;
 	int best_k;
@@ -409,7 +412,7 @@ main(int argc,char *argv[])
 		fflush(stdout);
 	}
 	else {
-		char graphfile[256];
+		char graphfile[64];
 		strcpy(graphfile, argv[2]);
 		gsize = atoi(argv[1]);
 		//printf("gsize=%d", gsize);
@@ -614,7 +617,7 @@ main(int argc,char *argv[])
 		if (best_l != -1)
 			FIFOInsertEdgeCount(taboo_list,best_i,best_l,count);
 #endif
-		printf("ce size: %d, best_count: %d, best edges: (%d,%d) (%d,%d) (%d,%d), new colors: %d %d\n",
+		printf("ce size: %d, best_count: %ld, best edges: (%d,%d) (%d,%d) (%d,%d), new colors: %d %d\n",
 			gsize,
 			best_count,
 			best_i,
