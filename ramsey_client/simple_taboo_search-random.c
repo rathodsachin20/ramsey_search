@@ -274,9 +274,18 @@ int main(int argc,char *argv[])
 			val = 1 - val; 
 		}
 	}
+
+	if( atoi(argv[2]) ){
+		for(i=0; i<gsize; i++){
+			for(j=0; j<gsize; j++)
+				g[i*gsize +j] = 1 - g[i*gsize +j];
+		}
+	}
+
 	PrintGraph(g, gsize);
 
 	int flag = 0;
+	int term = atoi(argv[1]);
 	/*
 	 * while we do not have a publishable result
 	 */
@@ -294,6 +303,19 @@ int main(int argc,char *argv[])
 		{
 			printf("Eureka!  Counter-example found!\n");
 			PrintGraph(g,gsize);
+
+			if(gsize == term)
+			{
+				FILE *fp;
+				char buf[100];
+				bzero(buf, 100);
+				sprintf(buf, "graph%d_3.state", gsize);
+				printf("Filename: %s", buf);
+				fp = fopen(buf, "w+");
+				PrintGraphToFile(g, gsize, fp);
+				fclose(fp);
+			}
+
 			//socket_upload(sock, g, gsize);	
 			/*
 			 * make a new graph one size bigger

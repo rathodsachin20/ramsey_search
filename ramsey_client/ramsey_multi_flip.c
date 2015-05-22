@@ -388,7 +388,7 @@ main(int argc,char *argv[])
 	 * while we do not have a publishable result
 	 */
     
-	while(gsize < 206)
+	while(gsize < 32)
 	{
 		/*
 		 * find out how we are doing
@@ -405,9 +405,20 @@ main(int argc,char *argv[])
 			fp = fopen(fname,"w");
 			char *key;
 			(void)MakeGraphKey(g,gsize,&key);
-		
-			PrintGraph(g,gsize,fp, key);
-			fclose(fp);	
+
+
+			if(gsize == 31)
+			{
+				FILE *fp;
+				char buf[100];
+				bzero(buf, 100);
+				sprintf(buf, "graph_%d.state", gsize);
+				printf("Filename: %s", buf); 
+				fp = fopen(buf, "w+");
+				PrintGraphToFile(g, gsize, fp);
+				fclose(fp);
+			}
+
 			free(key);
 			/*
 			 * make a new graph one size bigger

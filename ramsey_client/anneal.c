@@ -19,6 +19,7 @@
 #define INITEM 100000//initial temperature
 #define DTEM 100//temperature decrease interval
 #define INICLI 9999999//initial best clinique value
+#define ARGS "f:"
 
 int CliqueCount_D(int *g, int gsize, int i, int j, int flip) 
 {
@@ -205,6 +206,81 @@ int CliqueCount(int *g,
 	return(count);
 }
 
+
+int CliqueCountChecker(int *g,
+		int gsize)
+{
+	int i;
+	int j;
+	int k;
+	int l;
+	int m;
+	int n;
+	int o;
+	int count=0;
+
+	for(i=0;i < gsize-sgsize+1; i++)
+	{
+		for(j=i+1;j < gsize-sgsize+2; j++)
+		{
+			for(k=j+1;k < gsize-sgsize+3; k++) 
+			{ 
+				if((g[i*gsize+j] == g[i*gsize+k]) && 
+						(g[i*gsize+j] == g[j*gsize+k]))
+				{
+					for(l=k+1;l < gsize-sgsize+4; l++) 
+					{ 
+						if((g[i*gsize+j] == g[i*gsize+l]) && 
+								(g[i*gsize+j] == g[j*gsize+l]) && 
+								(g[i*gsize+j] == g[k*gsize+l]))
+						{
+							for(m=l+1;m < gsize-sgsize+5; m++) 
+							{
+								if((g[i*gsize+j] == g[i*gsize+m]) && 
+										(g[i*gsize+j] == g[j*gsize+m]) &&
+										(g[i*gsize+j] == g[k*gsize+m]) && 
+										(g[i*gsize+j] == g[l*gsize+m])) {
+									for(n=m+1; n < gsize-sgsize+6; n++)
+									{
+										if((g[i*gsize+j]
+													== g[i*gsize+n]) &&
+												(g[i*gsize+j] 
+												 == g[j*gsize+n]) &&
+												(g[i*gsize+j] 
+												 == g[k*gsize+n]) &&
+												(g[i*gsize+j] 
+												 == g[l*gsize+n]) &&
+												(g[i*gsize+j] 
+												 == g[m*gsize+n])) {
+											for(o=n+1; o < gsize-sgsize+7; o++) {
+												if((g[i*gsize+j]
+															== g[i*gsize+o]) &&
+														(g[i*gsize+j] 
+														 == g[j*gsize+o]) &&
+														(g[i*gsize+j] 
+														 == g[k*gsize+o]) &&
+														(g[i*gsize+j] 
+														 == g[l*gsize+o]) &&
+														(g[i*gsize+j] 
+														 == g[m*gsize+o]) &&
+														(g[i*gsize+j] == 
+														 g[n*gsize+o])) {
+													count++;
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return(count);
+}
+
 /*
    PaleyGraph as starting point
  */
@@ -227,6 +303,32 @@ int* PaleyGraph(int gsize){
 			g[v1*gsize + v2] = 1;
 		}
 	}
+
+	return g;
+
+}
+
+/*
+   PaleyGraph as starting point
+ */
+int* RandomGraph(int gsize){
+	int i, k;
+	int *g = (int * )malloc(gsize * gsize * sizeof(int));
+	memset(g, 1, gsize * gsize);
+
+	for( i=0; i<gsize; i++){
+		for( k= 1; k< (gsize)/ 2; k++)
+		{
+			g[i*gsize +k] = (drand48() > 0.5 ? 1: 0);
+		}
+	}
+
+	/*for( i=0; i<gsize; i++){
+		for( k= 1; k< (gsize)/ 2; k++)
+		{
+			g[i*gsize +k] = 1- g[i*gsize +k] ;
+		}
+	}*/
 
 	return g;
 
@@ -259,6 +361,126 @@ void CopyGraph(int *old_g, int o_gsize, int *new_g, int n_gsize)
 	return;
 }
 
+	int
+ReadGraph(char *fname,
+		int **g,
+		int *gsize)
+{
+	printf("Reading graph \n");
+	int i;
+	int j;
+	FILE *fd;
+	int lsize;
+	int *lg;
+	char line_buff[255];
+	char *curr;
+	char *err;
+	char *tempc;
+	int lcount;
+
+	fd = fopen(fname,"r");
+	if(fd == 0)
+	{
+		fprintf(stderr,"ReadGraph cannot open file %s\n",fname);
+		fflush(stderr);
+		return(0);
+	}
+
+	printf("Opened file \n");
+
+	fgets(line_buff,254,fd);
+	if(feof(fd))
+	{
+		fprintf(stderr,"ReadGraph eof on size\n");
+		fflush(stderr);
+		fclose(fd);
+		return(0);
+	}	
+	i = 0;
+	while((i < 254) && !isdigit(line_buff[i]))
+		i++;
+
+	/*
+	 * first line of the file must contain a size
+	 */
+	if(!isdigit(line_buff[i]))
+	{
+		fprintf(stderr,"ReadGraph format error on size\n");
+		fflush(stderr);
+		fclose(fd);
+		return(0);
+	}
+	tempc = line_buff;
+	lsize = (int)strtol(tempc,&tempc,10);
+	if((lsize < 0) || (lsize > MAXSIZE))
+	{
+		fprintf(stderr,"ReadGraph size bad, read: %d, max: %d\n",
+				lsize,MAXSIZE);
+		fflush(stderr);
+		fclose(fd);
+		return(0);
+	}
+
+	lg = (int *)malloc(lsize*lsize*sizeof(int));
+	if(lg == NULL)
+	{
+		fprintf(stderr,"ReadGraph: no space\n");
+		fflush(stderr);
+		return(0);
+	}
+
+	memset(lg,0,lsize*lsize*sizeof(int));
+
+	for(i=0; i < lsize; i++)
+	{
+		if(feof(fd))
+		{
+			break;
+		}
+		err = fgets(line_buff,254,fd);
+		if(err == NULL)
+		{
+			break;
+		}
+		curr = line_buff;
+		for(j=0; j < lsize; j++)
+		{
+			sscanf(curr,"%d ",&(lg[i*lsize+j]));
+			if((lg[i*lsize+j] != 1) && 
+					(lg[i*lsize+j] != 0))
+			{
+				fprintf(stderr,
+						"ReadGraph: non-boolean value read: %d\n", 
+						lg[i*lsize+j]);
+				fflush(stderr);
+				fclose(fd);
+				return(0);
+			}
+			while(isdigit(*curr))
+				curr++;
+			while(isspace(*curr))
+				curr++;
+		}
+	}
+
+	if(i < lsize)
+	{
+		fprintf(stderr,"ReadGraph file too short, lsize: %d\n",lsize);
+		fflush(stderr);
+		fclose(fd);
+		return(0);
+	}
+
+	fclose(fd);
+
+	*g = lg;
+	*gsize = lsize;
+
+	printf("Finished reading it!");
+	return(1);
+}
+
+
 int main(int argc,char *argv[])
 {
 	int *g;
@@ -276,16 +498,47 @@ int main(int argc,char *argv[])
 	int t=INITEM;
 	int sock = -1;
 
-	if(argc >= 2)
-	    sock = open_socket(argv[1]);
+	//if(argc >= 2)
+	//    sock = open_socket(argv[1]);
 
 	//create_fifo_thread(&sock);
 
 	/*
 	 * Starting with Paley size 101
 	 */
+	
+	/*
+	Paley Method
 	gsize = 13;
 	g = PaleyGraph(13);
+	
+	for(i=0; i<gsize; i++){
+		for(j=0; j<gsize; j++)
+			g[i*gsize +j] = 1 - g[i*gsize +j];
+	}
+
+	*/
+	char Fname[255];	char c;
+	while((c = getopt(argc,argv,ARGS)) != EOF)
+	{
+		switch(c)
+		{
+			case 'f':
+				strncpy(Fname,optarg,sizeof(Fname));
+				break;
+			default:
+				fprintf(stderr,
+				"test_clique_count  unrecognized argument: %c\n",c);
+				fflush(stderr);
+				break;
+		}
+	}
+
+	if(!ReadGraph(Fname,&g,&gsize))
+	{
+		gsize = 8;
+		g = PaleyGraph(8);
+	}
 
 	/*
 	 * make a fifo to use as the taboo list
@@ -298,11 +551,12 @@ int main(int argc,char *argv[])
 
 	int best_clique = INITEM;
 	int flag = 0; int min_count = BIGCOUNT;
+	//int term = atoi(argv[1]);
 
 	/*
 	 * while we do not have a publishable result
 	 */
-	while(gsize < 200)
+	while(gsize <= 61)
 	{
 
 		printf("Graph size is %d\n", gsize);
@@ -320,7 +574,13 @@ int main(int argc,char *argv[])
 			printf("Eureka!  Counter-example found!\n");
 			min_count = BIGCOUNT;
 
-			socket_upload_2(sock, -1, -1, count, gsize, g);
+			FILE *fp;
+			//printf("Filename: %s", buf);
+			fp = fopen(Fname, "w+");
+			PrintGraphToFile(g, gsize, fp);
+			fclose(fp);
+
+			//socket_upload_2(sock, -1, -1, count, gsize, g);
 			
 
 			/*
@@ -443,6 +703,8 @@ int main(int argc,char *argv[])
 			}
 		}
 
+		printf("2\n");
+
 		if(min_count > count)
 		{
 			min_count = count;
@@ -451,21 +713,26 @@ int main(int argc,char *argv[])
 		if (best_clique <= count){
 			g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];
 
-			if( CliqueCount(g, gsize) - count > 10)
+			if( CliqueCount(g, gsize) > count)
 			{
 				g[gt[0]*gsize+gt[1]] = 1 - g[gt[0]*gsize+gt[1]];				
 			}
 		}
 
+		printf("3\n");
 
 		FIFOInsertEdge(taboo_list,gt[0],gt[1]);
+		
+		printf("4\n");		
 		
 		t-=DTEM;	
 		if (t==0){
 			t=INITEM;
 		}
 
-		socket_upload_2(sock, gt[0], gt[1], count, gsize, g);
+		printf("5\n");		
+		
+		//socket_upload_2(sock, gt[0], gt[1], count, gsize, g);
 		printf("size: %d, temperature: %d, count: %d, best_clique: %d\n", gsize, t, count, best_clique);
 
 		free(cliques);
