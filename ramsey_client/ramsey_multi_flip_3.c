@@ -4,19 +4,19 @@
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
-
 #include "fifo.h"	/* for taboo list */
 //#include "graph_utils.h"
 
 #define USE_TABOO
+
 #define MAXSIZE (541)
+
 #define TABOOSIZE (1000)
-#define BIGCOUNT (9999999)
-#define ARGS "f:"
+#define BIGCOUNT (9999999999)
 
 int* g_latest = NULL;
 int g_size_latest = 1;
-int g_count_latest = BIGCOUNT;
+long g_count_latest = BIGCOUNT;
 
 
 /***
@@ -60,19 +60,22 @@ void sig_handler(int signum){
 	//sprintf(str_num, "%d.%d", g_size_latest, g_count_latest);
 	//strcat(filename, str_num);
 	if(g_latest != NULL){
-		printf("Printing current graph with size: %d and count: %d\n", g_size_latest, g_count_latest);
+		printf("Printing current graph with size: %d and count: %ld\n", g_size_latest, g_count_latest);
 		PrintGraph(g_latest, g_size_latest);
+		fflush(stdout);
 	}
 	else {
 		printf("No graph to print :(\n");
 	}
 	if(signum == SIGINT){
 		printf("Continuing execution.\n");
+		fflush(stdout);
 		return;
 	}
 	else if (signum == SIGTERM){
 		printf("Exiting.\n");
 		exit(signum);
+		fflush(stdout);
 	}
 }
 
@@ -84,14 +87,17 @@ void sig_handler(int signum){
  * out parameters.  The space for the file is malloced and the routine
  * is not thread safe.  Returns 1 on success and 0 on failure.
  */
-int ReadGraph(char *fname,int **g,int *gsize)
+	int
+ReadGraph(char *fname,
+		int **g,
+		int *gsize)
 {
 	int i;
 	int j;
 	FILE *fd;
 	int lsize;
 	int *lg;
-	char line_buff[255];
+	char line_buff[511];
 	char *curr;
 	char *err;
 	char *tempc;
@@ -105,7 +111,7 @@ int ReadGraph(char *fname,int **g,int *gsize)
 		return(0);
 	}
 
-	fgets(line_buff,254,fd);
+	fgets(line_buff,510,fd);
 	if(feof(fd))
 	{
 		fprintf(stderr,"ReadGraph eof on size\n");
@@ -114,7 +120,7 @@ int ReadGraph(char *fname,int **g,int *gsize)
 		return(0);
 	}	
 	i = 0;
-	while((i < 254) && !isdigit(line_buff[i]))
+	while((i < 510) && !isdigit(line_buff[i]))
 		i++;
 
 	/*
@@ -154,7 +160,7 @@ int ReadGraph(char *fname,int **g,int *gsize)
 		{
 			break;
 		}
-		err = fgets(line_buff,254,fd);
+		err = fgets(line_buff,510,fd);
 		if(err == NULL)
 		{
 			break;
@@ -235,7 +241,7 @@ void CopyGraph(int *old_g, int o_gsize, int *new_g, int n_gsize)
  *** only checks values above diagonal
  */
 
-int CliqueCount(int *g,
+long CliqueCount(int *g,
 	     int gsize)
 {
     int i;
@@ -245,7 +251,7 @@ int CliqueCount(int *g,
     int m;
     int n;
     int o;
-    int count=0;
+    long count=0;
     int sgsize = 7;
     
     for(i=0;i < gsize-sgsize+1; i++)
@@ -356,42 +362,65 @@ main(int argc,char *argv[])
 	int *g;
 	int *new_g;
 	int gsize;
-	int count;
-	int count_1;
-	int count_2;
-	int count_3;
+	long count;
+	long count_1;
+	long count_2;
+	long count_3;
 	int i;
 	int j;
-	int best_count;
+	long best_count;
 	int best_i;
 	int best_j;
 	int best_k;
 	int best_l;
 	void *taboo_list;
 	int val,iter,jter;
-	
-	char Fname[255];	
-	char c;
-	while((c = getopt(argc,argv,ARGS)) != EOF)
-	{
-		switch(c)
-		{
-			case 'f':
-				strncpy(Fname,optarg,sizeof(Fname));
-				break;
-			default:
-				fprintf(stderr,
-				"test_clique_count  unrecognized argument: %c\n",c);
-				fflush(stderr);
-				break;
+	/*
+	 * start with graph of size 8
+	 */
+
+	if (argc < 2) {
+		gsize = 8;
+		g = (int *)malloc(gsize*gsize*sizeof(int));
+		if(g == NULL) {
+			exit(1);
 		}
+
+	/*
+	 * start out with all zeros
+	 */
+		memset(g,0,gsize*gsize*sizeof(int));
+		val = 0, iter = 0, jter=0;
+		for( iter=0; iter<gsize; iter++){
+			for( jter = 0; jter< gsize; jter++){
+				g[iter*gsize + jter]  = val;
+				val = 1 - val; 
+			}
+		}
+		PrintGraph(g, gsize);
+
+	} else if (argc == 2) {
+
+		gsize = atoi(argv[1]);
+		g = (int *)malloc(gsize*gsize*sizeof(int));
+		if(g == NULL) {
+			exit(1);
+        	}
+		g = PaleyGraph(gsize);
+		printf("Starting from Paley graph of size %d\n.", gsize);
+		fflush(stdout);
+	}
+	else {
+		char graphfile[64];
+		strcpy(graphfile, argv[2]);
+		gsize = atoi(argv[1]);
+		//printf("gsize=%d", gsize);
+		g = (int *)malloc(gsize*gsize*sizeof(int));
+		ReadGraph(graphfile, &g, &gsize);
+		printf("Starting from given graph of size %d\n.", gsize);
+		fflush(stdout);
 	}
 
-	if(!ReadGraph(Fname,&g,&gsize))
-	{
-		gsize = 8;
-		g = PaleyGraph(8);
-	}
 	/*
 	 *make a fifo to use as the taboo list
 	 */
@@ -400,12 +429,11 @@ main(int argc,char *argv[])
                 exit(1);
         }
 
-	int term = 64;
 
 	/*
 	 * while we do not have a publishable result
 	 */
-	while(gsize <= term)
+	while(gsize < 206)
 	{
 		/*
 		 * find out how we are doing
@@ -418,16 +446,7 @@ main(int argc,char *argv[])
 		if(count == 0)
 		{
 			printf("Eureka!  Counter-example found!\n");
-			
-			FILE *fp;
-			char buf[100];			
-			bzero(buf, 100);
-			sprintf(buf, "graph%d.state", gsize);
-			printf("Filename: %s", buf);
-			fp = fopen(buf, "w+");
-			PrintGraphToFile(g, gsize, fp);
-			fclose(fp);
-
+			PrintGraph(g,gsize);
 			fflush(stdout);
 			/*
 			 * make a new graph one size bigger
@@ -597,7 +616,7 @@ main(int argc,char *argv[])
 		if (best_l != -1)
 			FIFOInsertEdgeCount(taboo_list,best_i,best_l,count);
 #endif
-		printf("ce size: %d, best_count: %d, best edges: (%d,%d) (%d,%d) (%d,%d), new colors: %d %d\n",
+		printf("ce size: %d, best_count: %ld, best edges: (%d,%d) (%d,%d) (%d,%d), new colors: %d %d\n",
 			gsize,
 			best_count,
 			best_i,
