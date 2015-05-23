@@ -68,12 +68,15 @@ class DynamoDB:
         try:
             table = self.get_table(tablename, conn, schema=schema)
             print str(kwargs)
-            ret = table.get_item(kwargs)
+            ret = table.get_item(**kwargs)
             if ret:
                 print "Get successful.\n"
             else:
                 print "Get failed.\n"
-            return ret
+            respd = {}
+            for field, value in ret.items():
+                respd[field] = value
+            return respd
         except Exception as ex:
             print "DynamoDB: Exception occured in get_item in table '"+tablename+"':" + str(ex)
 
@@ -104,7 +107,7 @@ class DynamoDB:
             #for item in putlist:
             #    resp = get_item(item.keys()[0], (item.values[0]).keys()[0] = (item.values[0]).values()[0])
             #    print "Got this item:"+ str(resp)
-            resp = self.get_item('clients', conn, clientId="host1.example.com")
+            resp = self.get_item('clients', conn, clientId="host2.example.com")
             print "Got this item:"+ str(resp)
         except Exception as ex:
             print "DynamoDB: Exception occured  :" + str(ex)
