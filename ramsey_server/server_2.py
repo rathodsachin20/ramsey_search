@@ -8,6 +8,7 @@ from thread import *
 import json
 import os
 import time
+import dynamo
 
 clients = {}
 updates = { }
@@ -29,6 +30,12 @@ def process_ce(data, conn):
     ce[hostname]["ce_size"] = data["gsize"]
     ce[hostname]["ce_graph"] = graph
      
+    db = dynamo.DynamoDB()
+    putdata = {}
+    putdata['clientId'] = hostname
+    putdata['gsize'] = data['gsize']
+    putdata['graph'] = graph
+    db.put_item('graphs', putdata)
     #print "[CE]", ce
 
 
@@ -37,6 +44,16 @@ def update_client_list(data,conn):
     print data["host_name"], data["ip"], data["port"]
     clients[data["host_name"]] = (data["ip"],int(data["port"]))
     conn.send(json.dumps({"return":"ok"}))
+
+    db = dynamo.DynamoDB()
+    putdata = {}
+    putdata['clientId'] = data['host_name']
+    putdata['ip'] = data['ip']
+    putdata['port'] = data['port']
+    putdata['cluster'] = ''  #TODO
+    putdata['algo'] = ''     #TODO
+    db.put_item('clients', putdata)
+    print "Dynamo updated with new client"
 
 def clientthread(conn):
     while True:
@@ -76,6 +93,13 @@ def process_update(data,conn):
     updates[hostname]["current_graph"] = graph
     updates[hostname]["current_gsize"] = data["gsize"]
      
+    db = dynamo.DynamoDB()
+    putdata = {}
+    putdata['clientId'] = hostname
+    putdata['gsize'] = data['gsize']
+    putdata['graph'] = graph
+    putdata['count'] = data['best_count']
+    db.put_item('status', putdata)
     #print "[UPD]",updates
    
 # To DO: to send algorithm that needs to be run on client
