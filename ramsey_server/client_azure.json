@@ -1,0 +1,11 @@
+{
+    "hosts": [
+        "dbjnbnrj@ramsey1.cloudapp.net:22",
+        "dbjnbnrj@ramsey2.cloudapp.net:22"
+    ],
+    "passwords": [
+        "Ram$ey204",
+        "Ram$ey204"
+    ],
+    "code_dir": "/home/dbjnbnrj/ramsey_search/ramsey_client"
+}
