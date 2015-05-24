@@ -1,0 +1,16 @@
+DynamoDB Schema:
+================
+
+Table: 'clients'
+Key: HashKey(clientId)
+Other possible columns: ip, cluster, algo, ...
+
+
+Table: 'status'
+Key: HashKey(clientId), RangeKey(gsize)
+Other possible columns: current_count, ...
+
+
+Table: 'graphs'
+Key: HashKey(gsize), RangeKey(clientId)
+Other columns: graph, ...
