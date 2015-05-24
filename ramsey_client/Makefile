@@ -11,7 +11,7 @@ PRED=.
 BOBJ= $(COMMON)/jval.o $(COMMON)/jrb.o $(COMMON)/dllist.o $(COMMON)/fifo.o $(COMMON)/connect.o
 LIBS= -lm 
 
-PROGRAMS = simple_taboo_search simple_taboo_search-7 test_clique_count anneal random multi_flip multi_flip_3 hybrid_search ramsey_graph ramsey_multi_thread
+PROGRAMS = simple_taboo_search simple_taboo_search-7 test_clique_count anneal random multi_flip multi_flip_3 hybrid_search ramsey_graph 
 
 all: $(PROGRAMS)
 
