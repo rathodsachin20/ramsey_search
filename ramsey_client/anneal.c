@@ -10,6 +10,8 @@
 #include "graph_utils.h"
 #include "connect.h"
 #include <pthread.h>
+#include<signal.h>
+#include<unistd.h>
 
 #define sgsize 7
 #define MAXSIZE (541)
@@ -20,6 +22,34 @@
 #define DTEM 100//temperature decrease interval
 #define INICLI 9999999//initial best clinique value
 #define ARGS "f:"
+
+int* g_latest = NULL;
+int g_size_latest = 1;
+long g_count_latest = BIGCOUNT;
+
+void sig_handler(int signum){
+	printf("Caught signal %d\n", signum);
+if(g_latest != NULL){
+		printf("Printing current graph with size: %d and count: %ld\n", g_size_latest, g_count_latest);
+		FILE * fp = fopen("temp.state", "w");
+		PrintGraphToFile(g_latest, g_size_latest, fp);
+fclose(fp);
+		fflush(stdout);
+	}
+	else {
+		printf("No graph to print :(\n");
+	}
+	if(signum == SIGINT){
+		printf("Continuing execution.\n");
+		fflush(stdout);
+		return;
+	}
+	else if (signum == SIGTERM){
+		printf("Exiting.\n");
+		exit(signum);
+		fflush(stdout);
+	}
+}
 
 int CliqueCount_D(int *g, int gsize, int i, int j, int flip) 
 {
@@ -205,6 +235,8 @@ int CliqueCount(int *g,
 	}
 	return(count);
 }
+
+
 
 
 int CliqueCountChecker(int *g,
@@ -483,6 +515,10 @@ ReadGraph(char *fname,
 
 int main(int argc,char *argv[])
 {
+	printf("Setting up signals \n");
+	signal(SIGINT, sig_handler);
+	signal(SIGTERM, sig_handler);
+
 	int *g;
 	int *new_g;
 	int gsize;
@@ -556,7 +592,7 @@ int main(int argc,char *argv[])
 	/*
 	 * while we do not have a publishable result
 	 */
-	while(gsize <= 61)
+	while(gsize <= 122)
 	{
 
 		printf("Graph size is %d\n", gsize);
@@ -576,7 +612,7 @@ int main(int argc,char *argv[])
 
 			FILE *fp;
 			//printf("Filename: %s", buf);
-			fp = fopen(Fname, "w+");
+			fp = fopen("result.state", "w");
 			PrintGraphToFile(g, gsize, fp);
 			fclose(fp);
 
@@ -737,6 +773,9 @@ int main(int argc,char *argv[])
 
 		free(cliques);
 
+		g_latest = g;
+		g_size_latest = gsize;
+		g_count_latest = count;
 	}
 
 	FIFODeleteGraph(taboo_list);
