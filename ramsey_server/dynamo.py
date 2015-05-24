@@ -36,15 +36,16 @@ class DynamoDB:
     def create_table(self, name, schema, conn=None):
         try:
             if conn is None:
-                table = Table.create(name, schema=schema)
-            else:
-                table = Table.create(name, schema=schema, connection=conn)
+                conn = connect_to_region(REGION, aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+            table = Table.create(name, schema=schema, connection=conn)
             return table
         except Exception as ex:
             print "Exception occured while creating table in dynamo:" + str(ex)
 
-    def get_table(self, name, conn, schema=None):
+    def get_table(self, name, conn=None, schema=None):
         try:
+            if conn is None:
+                conn = connect_to_region(REGION, aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
             if schema is None:
                 table = Table(name, connection=conn)
             else:
@@ -53,8 +54,10 @@ class DynamoDB:
         except Exception as ex:
             print "Exception occured while getting table in dynamo:" + str(ex)
 
-    def put_item(self, tablename, conn, data, schema=None):
+    def put_item(self, tablename, data, conn=None, schema=None):
         try:
+            if conn is None:
+                conn = connect_to_region(REGION, aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
             table = self.get_table(tablename, conn, schema=schema)
             ret = table.put_item(data=data)
             if ret:
@@ -64,8 +67,10 @@ class DynamoDB:
         except Exception as ex:
             print "DynamoDB: Exception occured in put_item in table '"+tablename+"':" + str(ex)
 
-    def get_item(self, tablename, conn, schema=None, **kwargs):
+    def get_item(self, tablename, conn=None, schema=None, **kwargs):
         try:
+            if conn is None:
+                conn = connect_to_region(REGION, aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
             table = self.get_table(tablename, conn, schema=schema)
             print str(kwargs)
             ret = table.get_item(**kwargs)
@@ -90,24 +95,19 @@ class DynamoDB:
         tables['status'] = status_schema
         tables['graphs'] = graphs_schema
 
-        conn = connect_to_region(REGION, aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
         for name in tables.keys():
-            self.create_table(name, schema=tables[name], conn=conn)
+            self.create_table(name, schema=tables[name])
 
     def test_tables(self):
         try:
-            conn = connect_to_region(REGION, aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
             putlist = []
             putlist.append( {'clients' : {'clientId':"host1.example.com"} } )
             putlist.append( {'clients' : {"clientId":"host2.example.com", "ip":"10.1.1.1", "cluster":"aws", "algo":"multiflip"} } )
             putlist.append( {"status"  : {"clientId":"host1", "gsize":'121', "current_count":4} } )
             putlist.append( {"graphs"  : {"gsize":'120', "clientId":"host2", "graph":"10110101000101010101111000101"} } )
             #for item in putlist:
-            #    self.put_item(item.keys()[0], conn, data=item.values()[0])
-            #for item in putlist:
-            #    resp = get_item(item.keys()[0], (item.values[0]).keys()[0] = (item.values[0]).values()[0])
-            #    print "Got this item:"+ str(resp)
-            resp = self.get_item('clients', conn, clientId="host2.example.com")
+            #    self.put_item(item.keys()[0], data=item.values()[0])
+            resp = self.get_item('clients', clientId="host2.example.com")
             print "Got this item:"+ str(resp)
         except Exception as ex:
             print "DynamoDB: Exception occured  :" + str(ex)
