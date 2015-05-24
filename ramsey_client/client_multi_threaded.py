@@ -11,7 +11,7 @@ import signal
 
 ramsey_pid = 0
 server_address = ()
-current_size = 0
+current_size = 8
 def poll_for_CE():
     # Connect the socket to the port where the server is listening
     global server_address
@@ -154,7 +154,7 @@ def act_on_broadcast():
         print "[RBRD]recieved graph", graph
         conn.send(json.dumps({"return":"ok"}))
         '''write graph to a file. start a new ramsey_search'''
-        if current_size != gsize:
+        if current_size < gsize:
             current_size = gsize
             fname = write_graph_to_file(graph, gsize)
             print "killing process " + str(ramsey_pid)
