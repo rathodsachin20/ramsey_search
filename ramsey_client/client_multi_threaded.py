@@ -11,6 +11,7 @@ import signal
 
 ramsey_pid = 0
 server_address = ()
+current_size = 0
 def poll_for_CE():
     # Connect the socket to the port where the server is listening
     global server_address
@@ -45,11 +46,11 @@ def poll_for_CE():
 
         data = json.loads(sock.recv(1024))
         if data["return"] == "ok":
-            print "Sending actual graph" 
+            print "[CE]Sending actual graph" 
             sock.send(graph)
-            print "waiting for server reply"
+            print "[CE]waiting for server reply"
             data = json.loads(sock.recv(1024))
-            print "server again sent", data	
+            print "[CE]server again sent", data	
         sock.close()
         count += 1
 	
@@ -80,18 +81,18 @@ def poll_for_updates():
         print "best_count", json_upd["gsize"]
         #read the entire graph
         graph = f.read()
-        print graph
+        #print graph
         json_upd["gsize_bytes"] = len(graph)
         sock.send(json.dumps(json_upd))
         
         data = json.loads(sock.recv(1024))
         
         if data["return"] == "ok":
-            print "Sending actual graph" 
+            print "[UPD]Sending actual graph" 
             sock.send(graph)
-            print "waiting for server reply"
+            print "[UPD]waiting for server reply"
             data = json.loads(sock.recv(1024))
-            print "server again sent", data	
+            print "[UPD]server again sent", data	
         sock.close()
         count += 1
 
@@ -99,6 +100,7 @@ def poll_for_updates():
 def act_on_broadcast():
     global server_address
     global ramsey_pid
+    global current_size
     broadcast = {}
 
     while True:
@@ -112,11 +114,11 @@ def act_on_broadcast():
         sock.send(json.dumps(broadcast))
         data = json.loads(sock.recv(1024).strip())
         if data["return"] == "ok":
-            print "client registered with server ", server_address
+            print "[BRD]client registered with server ", server_address
             break
         else:
             print "client failed to register with server ", server_address
-            
+                        
     sock.close()
 
     HOST = "0.0.0.0"   
@@ -136,7 +138,7 @@ def act_on_broadcast():
     while 1:
     #wait to accept a connection - blocking call
         conn, addr = s.accept()
-        print 'Connected with ' + addr[0] + ':' + str(addr[1])
+        print '[RBRD]Connected with ' + addr[0] + ':' + str(addr[1])
         '''Handle broadcast message from server. Kill ramsey search and start
            a new one with new graph. Update the new process pid''' 
 
@@ -144,18 +146,22 @@ def act_on_broadcast():
         data = json.loads(conn.recv(1024))
         gsize_bytes = int(data["gsize_bytes"])
         gsize = int(data["gsize"])
-        print "got graph size - sending ok", gsize 
+        print "[RBRD]got graph size - sending ok", gsize 
         conn.send(json.dumps({"return":"ok"})) 
-        print "recieve the entire graph now"
+        print "[RBRD]recieve the entire graph now"
         graph = conn.recv(gsize_bytes)
         
-        print "recieved graph", graph
+        print "[RBRD]recieved graph", graph
         conn.send(json.dumps({"return":"ok"}))
         '''write graph to a file. start a new ramsey_search'''
-        fname = write_graph_to_file(graph, gsize)
-        print "killing process " + str(ramsey_pid)
-        os.kill(ramsey_pid, signal.SIGKILL)
-        start_ramsey_search(fname,gsize)
+        if current_size != gsize:
+            current_size = gsize
+            fname = write_graph_to_file(graph, gsize)
+            print "killing process " + str(ramsey_pid)
+            os.kill(ramsey_pid, signal.SIGKILL)
+            start_ramsey_search(fname,gsize)
+        else:
+            continue
 
     s.close()
 
