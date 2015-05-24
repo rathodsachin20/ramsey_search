@@ -405,7 +405,7 @@ main(int argc,char *argv[])
 			fp = fopen(fname,"w");
 			char *key;
 			(void)MakeGraphKey(g,gsize,&key);
-
+            PrintGraph(g,gsize,fp, key);    
 
 			if(gsize == 31)
 			{
