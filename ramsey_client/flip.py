@@ -163,9 +163,9 @@ def generateseeds(num):
 
 #generateseeds(10)
 
-print splitgraph( "temp.state", 122 , False)
-#fnames = ['graph61_1.state', 'graph61_2.state', 'graph61_3.state', 'graph61_4.state']
-#join(fnames, 122)
+#print splitgraph( "temp.state", 122 , False)
+fnames = ['graph63_11.state', 'graph63_22.state', 'graph63_33.state', 'graph63_44.state']
+join(fnames, 126)
 
 
 ''''
