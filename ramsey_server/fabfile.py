@@ -4,12 +4,12 @@ from fabric.contrib.console import confirm
 from job import *
 from fabric.contrib.files import exists
 import json
+import sys
 from ilogue.fexpect import expect, expecting, run 
 from fabric.contrib.files import exists
 
-
-host_file = open('server_azure.json')
-host_result = json.load(host_file)
+f = open(env.f)
+host_result = json.load(f)
 
 if "hosts" in host_result:
 	env.hosts = host_result["hosts"]
@@ -17,6 +17,8 @@ if "password" in host_result:
 	env.passwords = host_result["passwords"]
 if "key_filename" in host_result:
 	env.key_filename = host_result["key_filename"]
+if "user" in host_result:
+	env.user = host_result["user"]
 if "ipaddress" in host_result:
 	ipaddress = host_result["ipaddress"]
 

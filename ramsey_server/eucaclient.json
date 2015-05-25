@@ -1,0 +1,13 @@
+{
+    "hosts": [
+        "128.111.84.173",
+        "128.111.84.219",
+        "128.111.84.235"
+    ],
+    "key_filename": [
+        "partyof4.key"
+    ],
+    "user": "ec2-user",
+    "ipaddress": "128.111.84.168",
+    "code_dir": "/home/dbjnbnrj/ramsey_search/ramsey_client"
+}

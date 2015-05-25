@@ -1,0 +1,13 @@
+{
+    "hosts": [
+        "52.24.235.237",
+        "52.25.104.145",
+        "52.10.198.153"
+    ],
+    "key_filename": [
+        "ramsey.pem"
+    ],
+    "user": "ec2-user",
+    "ipaddress": "52.24.69.182",
+    "code_dir": "/home/dbjnbnrj/ramsey_search/ramsey_client"
+}
