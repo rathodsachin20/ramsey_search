@@ -55,7 +55,7 @@ def start_client():
 			run("make all")
 			sudo('screen -d python client_2.py '+ipaddress+'; sleep 1')
 
-def setup_client():
+def setup_ubuntu():
 		sudo("apt-get install python-pip python-dev build-essential")
 		sudo("apt-get install screen")
 		sudo("pip install pexpect")
@@ -65,6 +65,18 @@ def setup_client():
 			sudo("git clone https://github.com/dbjnbnrj/ramsey_search.git")
 		with cd(code_dir):
 			sudo("make clean")
+
+def setup_centos():
+		sudo("yum install python-pip python-dev build-essential")
+		sudo("yum install screen")
+		sudo("pip install pexpect")
+		if exists(code_dir):
+			sudo("rm -rf "+code_dir)
+		with expecting(prompts):
+			sudo("git clone https://github.com/dbjnbnrj/ramsey_search.git")
+		with cd(code_dir):
+			sudo("make clean")
+
 
 def check():
 	run("ls")
