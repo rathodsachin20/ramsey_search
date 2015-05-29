@@ -21,7 +21,7 @@
 #define INITEM 100000//initial temperature
 #define DTEM 100//temperature decrease interval
 #define INICLI 9999999//initial best clinique value
-#define ARGS "f:"
+#define ARGS "l:f:"
 
 int* g_latest = NULL;
 int g_size_latest = 1;
@@ -534,34 +534,23 @@ int main(int argc,char *argv[])
 	int t=INITEM;
 	int sock = -1;
 
-	//if(argc >= 2)
-	//    sock = open_socket(argv[1]);
-
-	//create_fifo_thread(&sock);
-
-	/*
-	 * Starting with Paley size 101
-	 */
+	char Fname[255];	
+	char c; 
 	
-	/*
-	Paley Method
-	gsize = 13;
-	g = PaleyGraph(13);
-	
-	for(i=0; i<gsize; i++){
-		for(j=0; j<gsize; j++)
-			g[i*gsize +j] = 1 - g[i*gsize +j];
-	}
-
-	*/
-	char Fname[255];	char c;
-	while((c = getopt(argc,argv,ARGS)) != EOF)
+	int ilim = 8;
+	while((c = getopt(argc,argv,ARGS)) !=  EOF)
 	{
 		switch(c)
 		{
 			case 'f':
 				strncpy(Fname,optarg,sizeof(Fname));
 				break;
+			
+			case 'l':
+				printf("optarg: %s", optarg);
+				ilim = atoi(optarg);
+				break;
+
 			default:
 				fprintf(stderr,
 				"test_clique_count  unrecognized argument: %c\n",c);
@@ -569,6 +558,7 @@ int main(int argc,char *argv[])
 				break;
 		}
 	}
+
 
 	if(!ReadGraph(Fname,&g,&gsize))
 	{
@@ -592,7 +582,7 @@ int main(int argc,char *argv[])
 	/*
 	 * while we do not have a publishable result
 	 */
-	while(gsize <= 122)
+	while(gsize <= ilim)
 	{
 
 		printf("Graph size is %d\n", gsize);
