@@ -1,0 +1,49 @@
+<script type="text/javascript">
+  $(document).ready(function(){
+  	setInterval(updater,2000);
+  	alert("hi there wewe");
+  	//var data = '<%= @resp[:items]%>'
+  	//var ip=[];
+  	//document.getElementById("a").innerHTML = data;
+    //alert('<%= @resp[:items][1]%>');
+  });
+
+  function updater(){
+  	
+  	var data = '<%= @resp[:items]%>'
+  	var ip=[];
+  	document.getElementById("a").innerHTML = data;
+  };
+</script>
+
+<div class="container text-center">
+	<h1 >Welcome to Ramsey Search WebApp</h1>
+</div>
+</br></br>
+<div id="a">
+
+</div>
+Add pagination for different servers
+<div class="container text-center center-block">
+	<table class="table table-striped ">
+		<thead>
+			<tr>
+				<th>Client ID</th>
+				<th>Cluster</th>
+				<th>IP Address</th>
+				<th>Port</th>
+				<th>Algorithm Running</th>
+			</tr>
+		</thead>
+		<tbody>
+			<% @resp[:items].each do |r| %>
+			<tr>
+				<td class="col-md-3"><%= r['clientId']%></td>
+				<td class="col-md-2"><%= r['cluster']%></td>
+				<td class="col-md-2"><%= r['ip']%></td>
+				<td class="col-md-2"><%= r['port']%></td>
+				<td class="col-md-2"><%= r['algo']%></td>
+			</tr>
+			<%end%>
+		</tbody>
+</div>
