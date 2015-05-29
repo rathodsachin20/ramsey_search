@@ -34,6 +34,25 @@ long g_count_latest = BIGCOUNT;
  *
  * prints in the right format for the read routine
  */
+void PrintGraph(int *g, int gsize,FILE *fp, char *key)
+{
+	int i;
+	int j;
+
+	fprintf(fp,"%d",gsize);
+	fprintf(fp," %s\n",key);
+	for(i=0; i < gsize; i++)
+	{
+		for(j=0; j < gsize; j++)
+		{
+			fprintf(fp,"%d ",g[i*gsize+j]);
+		}
+		fprintf(fp,"\n");
+	}
+
+	return;
+}
+/*
 void PrintGraph(int *g, int gsize)
 {
 	int i;
@@ -52,7 +71,7 @@ void PrintGraph(int *g, int gsize)
 
 	return;
 }
-
+*/
 void sig_handler(int signum){
 	printf("Caught signal %d\n", signum);
 	//char filename[100] = "dump_";
@@ -60,8 +79,8 @@ void sig_handler(int signum){
 	//sprintf(str_num, "%d.%d", g_size_latest, g_count_latest);
 	//strcat(filename, str_num);
 	if(g_latest != NULL){
-		printf("Printing current graph with size: %d and count: %ld\n", g_size_latest, g_count_latest);
-		PrintGraph(g_latest, g_size_latest);
+		//printf("Printing current graph with size: %d and count: %ld\n", g_size_latest, g_count_latest);
+		//PrintGraph(g_latest, g_size_latest);
 		fflush(stdout);
 	}
 	else {
@@ -375,6 +394,10 @@ main(int argc,char *argv[])
 	int best_l;
 	void *taboo_list;
 	int val,iter,jter;
+	char fname[255];
+	FILE *fp;
+    char bc[255];
+    int fd;
 	/*
 	 * start with graph of size 8
 	 */
@@ -397,7 +420,7 @@ main(int argc,char *argv[])
 				val = 1 - val; 
 			}
 		}
-		PrintGraph(g, gsize);
+		//PrintGraph(g, gsize);
 
 	} else if (argc == 2) {
 
@@ -445,9 +468,16 @@ main(int argc,char *argv[])
 		 */
 		if(count == 0)
 		{
-			printf("Eureka!  Counter-example found!\n");
-			PrintGraph(g,gsize);
-			fflush(stdout);
+			sprintf(fname,"solutions/CE-%d.txt",gsize);
+			fp = fopen(fname,"w");
+			char *key;
+			(void)MakeGraphKey(g,gsize,&key);
+            PrintGraph(g,gsize,fp, key);    
+            fclose(fp);
+			free(key);
+			//printf("Eureka!  Counter-example found!\n");
+			//PrintGraph(g,gsize);
+			//fflush(stdout);
 			/*
 			 * make a new graph one size bigger
 			 */
@@ -636,6 +666,19 @@ main(int argc,char *argv[])
 		 */
 	}
 
+        /* write update to file */	
+	    sprintf(fname,"solutions/CE-%d-upd.txt",gsize);
+        sprintf(bc,"%d",best_count);
+        fp = fopen(fname, "w+");
+        if (fp == NULL) {
+            printf("\n Ah file error ? \n");
+            exit(0);
+    
+        }
+        fd = fileno(fp);
+        ftruncate(fd, 0);
+        PrintGraph(g,gsize,fp, bc);
+	    fclose(fp);	
 	FIFODeleteGraph(taboo_list);
 
 
