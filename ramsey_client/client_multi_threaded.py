@@ -179,7 +179,7 @@ def write_graph_to_file(graph, gsize):
 ''' input parameters constant ???'''
 def start_ramsey_search(fname, size):
     global ramsey_pid
-    executable = './ramsey_multi_flip ' +  str(size) + ' ' + fname
+    executable = './ramsey_multi_flip_3 ' +  str(size) + ' ' + fname
     print executable  
     proc = subprocess.Popen(executable, shell=True)
     time.sleep(1) # some buffer !!!
@@ -191,7 +191,7 @@ def start_ramsey_search(fname, size):
 def bootstrap_ramsey(size):
     global ramsey_pid
     argument = size
-    executable = './ramsey_multi_flip ' + size
+    executable = './ramsey_multi_flip_3 ' + size
     print executable
     proc = subprocess.Popen( executable, shell=True)
     time.sleep(1) # some buffer !!!
