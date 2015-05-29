@@ -33,7 +33,7 @@ def process_ce(data, conn):
     db = dynamo.DynamoDB()
     putdata = {}
     putdata['clientId'] = hostname
-    putdata['gsize'] = data['gsize']
+    putdata['gsize'] = str(data['gsize'])
     putdata['graph'] = graph
     db.put_item('graphs', putdata)
     #print "[CE]", ce
@@ -49,7 +49,7 @@ def update_client_list(data,conn):
     putdata = {}
     putdata['clientId'] = data['host_name']
     putdata['ip'] = data['ip']
-    putdata['port'] = data['port']
+    putdata['port'] = str(data['port'])
     putdata['cluster'] = ''  #TODO
     putdata['algo'] = ''     #TODO
     db.put_item('clients', putdata)
@@ -96,9 +96,9 @@ def process_update(data,conn):
     db = dynamo.DynamoDB()
     putdata = {}
     putdata['clientId'] = hostname
-    putdata['gsize'] = data['gsize']
+    putdata['gsize'] = str(data['gsize'])
     putdata['graph'] = graph
-    putdata['count'] = data['best_count']
+    putdata['count'] = str(data['best_count'])
     db.put_item('status', putdata)
     #print "[UPD]",updates
    

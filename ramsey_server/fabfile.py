@@ -4,12 +4,12 @@ from fabric.contrib.console import confirm
 from job import *
 from fabric.contrib.files import exists
 import json
+import sys
 from ilogue.fexpect import expect, expecting, run 
 from fabric.contrib.files import exists
 
-
-host_file = open('server_azure.json')
-host_result = json.load(host_file)
+f = open(env.f)
+host_result = json.load(f)
 
 if "hosts" in host_result:
 	env.hosts = host_result["hosts"]
@@ -17,6 +17,8 @@ if "password" in host_result:
 	env.passwords = host_result["passwords"]
 if "key_filename" in host_result:
 	env.key_filename = host_result["key_filename"]
+if "user" in host_result:
+	env.user = host_result["user"]
 if "ipaddress" in host_result:
 	ipaddress = host_result["ipaddress"]
 
@@ -53,7 +55,7 @@ def start_client():
 			run("make all")
 			sudo('screen -d python client_2.py '+ipaddress+'; sleep 1')
 
-def setup_client():
+def setup_ubuntu():
 		sudo("apt-get install python-pip python-dev build-essential")
 		sudo("apt-get install screen")
 		sudo("pip install pexpect")
@@ -63,6 +65,18 @@ def setup_client():
 			sudo("git clone https://github.com/dbjnbnrj/ramsey_search.git")
 		with cd(code_dir):
 			sudo("make clean")
+
+def setup_centos():
+		sudo("yum install python-pip python-dev build-essential")
+		sudo("yum install screen")
+		sudo("pip install pexpect")
+		if exists(code_dir):
+			sudo("rm -rf "+code_dir)
+		with expecting(prompts):
+			sudo("git clone https://github.com/dbjnbnrj/ramsey_search.git")
+		with cd(code_dir):
+			sudo("make clean")
+
 
 def check():
 	run("ls")
