@@ -181,11 +181,6 @@ def check_for_broadcast():
         if graph_update_size > best_ce_graph:
             graph_to_update = best_update_graph
             send_broadcast(graph_to_update, min_best_count)
-        else:
-            print "Its CE again\n"
-            graph_to_update = best_ce_graph
-            send_broadcast(graph_to_update, max_CE)
-
         time.sleep(3)
           
 
