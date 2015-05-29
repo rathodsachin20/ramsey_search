@@ -205,7 +205,8 @@ def bootstrap_ramsey(size):
 
 threads = []
 if  __name__ == "__main__":
-    global server_aiddress
+    global server_address
+    global threads
     if len(sys.argv) < 2:
         print "Usage " + sys.argv[0] + "(server_ip/DNS name)"
         sys.exit(1)      
