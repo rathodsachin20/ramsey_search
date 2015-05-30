@@ -664,23 +664,23 @@ main(int argc,char *argv[])
 		/*
 		 * rinse and repeat
 		 */
-	}
 
         /* write update to file */	
 	    sprintf(fname,"solutions/CE-%d-upd.txt",gsize);
-        sprintf(bc,"%d",best_count);
-        fp = fopen(fname, "w+");
-        if (fp == NULL) {
-            printf("\n Ah file error ? \n");
-            exit(0);
+            sprintf(bc,"%d",best_count);
+            fp = fopen(fname, "w+");
+            if (fp == NULL) {
+                printf("\n Ah file error ? \n");
+                exit(0);
     
-        }
-        fd = fileno(fp);
-        ftruncate(fd, 0);
-        PrintGraph(g,gsize,fp, bc);
-	    fclose(fp);	
-	FIFODeleteGraph(taboo_list);
+            }
+            fd = fileno(fp);
+            ftruncate(fd, 0);
+            PrintGraph(g,gsize,fp, bc);
+	        fclose(fp);
+	}
 
+        FIFODeleteGraph(taboo_list);
 
 	return(0);
 
