@@ -317,18 +317,18 @@ int CliqueCountChecker(int *g,
    PaleyGraph as starting point
  */
 int* PaleyGraph(int gsize){
-	int i, k;
+	long i, k;
 	int *g = (int * )malloc(gsize * gsize * sizeof(int));
 	memset(g, 0, gsize * gsize);
 
 	for( i=0; i<gsize; i++){
 		for( k= 1; k< (gsize)/ 2; k++)
 		{
-			int v1 = i;
-			int v2 = ( i + k*k ) % gsize;
+			long v1 = i;
+			long v2 = ( i + k*k ) % gsize;
 			if(v1 > v2)
 			{
-				int j = v1;
+				long j = v1;
 				v1 = v2; 
 				v2 = j;
 			}
@@ -562,8 +562,8 @@ int main(int argc,char *argv[])
 
 	if(!ReadGraph(Fname,&g,&gsize))
 	{
-		gsize = 8;
-		g = PaleyGraph(8);
+		gsize = ilim;
+		g = PaleyGraph(ilim);
 	}
 
 	/*
