@@ -38,7 +38,7 @@ then
 		then
 			echo "Code compiled successfully" >> ~/client.log
 		fi
-		python client_multi_threaded.py  2>&1 >> ~/client.log &
+		python client_multi_threaded.py serverip 2>&1 >> ~/client.log &
 	fi
 fi
 
