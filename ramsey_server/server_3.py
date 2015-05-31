@@ -33,7 +33,7 @@ def process_ce(data, conn):
     db = dynamo.DynamoDB()
     putdata = {}
     putdata['clientId'] = hostname
-    putdata['gsize'] = data['gsize']
+    putdata['gsize'] = str(data['gsize'])
     putdata['graph'] = graph
     db.put_item('graphs', putdata)
     #print updates
@@ -41,6 +41,7 @@ def process_ce(data, conn):
 
 def update_client_list(data,conn):
     global clients
+    global clientaddress
     print data["host_name"], data["ip"], data["port"]
     clients[data["host_name"]] = (data["ip"],int(data["port"]))
     conn.send(json.dumps({"return":"ok"}))
@@ -48,8 +49,8 @@ def update_client_list(data,conn):
     db = dynamo.DynamoDB()
     putdata = {}
     putdata['clientId'] = data['host_name']
-    putdata['ip'] = data['ip']
-    putdata['port'] = data['port']
+    #putdata['ip'] = data['ip']
+    putdata['port'] = str(data['port'])
     putdata['cluster'] = ''  #TODO
     putdata['algo'] = ''     #TODO
     db.put_item('clients', putdata)
@@ -95,9 +96,9 @@ def process_update(data,conn):
     db = dynamo.DynamoDB()
     putdata = {}
     putdata['clientId'] = hostname
-    putdata['gsize'] = data['gsize']
+    putdata['gsize'] = str(data['gsize'])
     putdata['graph'] = graph
-    putdata['count'] = data['best_count']
+    putdata['count'] = str(data['best_count'])
     db.put_item('status', putdata)
      
 #    print updates
@@ -139,7 +140,6 @@ def send_broadcast(graph, count):
             data = json.loads(data)
             if data["return"] == "ok":
                 print "Graph sent to", host 
-
         sock.close()
 
 
@@ -223,7 +223,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
- 
 
