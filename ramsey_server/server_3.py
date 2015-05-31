@@ -14,6 +14,7 @@ clients = {}
 updates = { }
 ce = { }
 clientaddress = {}
+cluster_name = ""
 
 # Processing mesg
 def process_ce(data, conn):
@@ -42,6 +43,7 @@ def process_ce(data, conn):
 def update_client_list(data,conn):
     global clients
     global clientaddress
+    global cluster_name
     print data["host_name"], data["ip"], data["port"]
     clients[data["host_name"]] = (data["ip"],int(data["port"]))
     conn.send(json.dumps({"return":"ok"}))
@@ -51,7 +53,7 @@ def update_client_list(data,conn):
     putdata['clientId'] = data['host_name']
     #putdata['ip'] = data['ip']
     putdata['port'] = str(data['port'])
-    putdata['cluster'] = ''  #TODO
+    putdata['cluster'] = cluster_name  #TODO
     putdata['algo'] = ''     #TODO
     db.put_item('clients', putdata)
     print "Dynamo updated with new client"
@@ -185,9 +187,13 @@ def check_for_broadcast():
           
 
 def main():
+    global cluster_name
     # replace this by sock.gethostname()
     HOST = '0.0.0.0'   # Symbolic name meaning all available interfaces
     PORT = 8888 # Arbitrary non-privileged port
+
+    if len(sys.argv)>1:
+        cluster_name = sys.argv[1]
  
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print 'Socket created'
@@ -215,9 +221,9 @@ def main():
         conn, addr = s.accept()
         if clientaddress.has_key(addr[0]) == False:
             clientaddress[addr[0]] = (addr[0], port)
-        
+
         print 'Connected with ' + addr[0] + ':' + str(addr[1])
-     
+
         start_new_thread(clientthread ,(conn,))
     s.close()
 
