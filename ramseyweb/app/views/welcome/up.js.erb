@@ -1,2 +1,69 @@
-document.getElementById("a").innerHTML= '<%= @clients[:items]%>';
-//alert('poll worked');
+var data = '<%= raw @clients[:items].to_json%>';
+var obj = JSON.parse(data);
+
+var bc, c_init=[], c_updtd=[], count=0;
+
+function getState(clist){
+	var el = document.getElementsByClassName('clientId');
+
+	for(var i=0; i<el.length; i++){
+		clist.push(el.item(i).innerHTML);	
+	}
+}
+
+function updateTable(){
+	var rows = '';
+	for(var i=0; i<obj.length; i++){
+		o = obj[i];
+		var row = '<tr>';
+		for (var key in o) {
+			row += '<td class=' + key + '>' + o[key] + '</td>';
+		}
+		row += '</tr>';
+		rows += row;
+	}
+
+	$("#c_body").html(rows);
+}
+getState(c_init);
+console.log("initial client count: " + c_init.length);
+updateTable();
+getState(c_updtd);
+console.log("updated client count: " + c_updtd.length);
+
+function updateTickr(){
+
+	console.log(c_init.length);
+
+	for(var i=0; i<c_updtd.length; i++){
+		index = c_init.indexOf(c_updtd[i]);
+		if(index<0){
+			//new element found
+			$("#left").append('<p> New Client : '+c_updtd[i]+'</p>');
+			count++;
+		}
+		else{
+			//done with this element
+			c_init.splice(index,1);
+		}
+	}
+	if(c_init.length > 0){
+		//some clients are down
+		for(var i=0; i<c_init.length; i++){
+			$("#left").append('<p> Client Down:'+c_init[i]+'</p>');
+			count++;
+		}
+		console.log("no. of clients down: " + c_init.length);
+	}
+
+	if(count>0){
+		document.getElementById("notif").innerHTML=count;	
+		$("#notif").show();
+	}
+}
+
+function notifread(){
+	$("#notif").hide();
+}
+
+updateTickr();

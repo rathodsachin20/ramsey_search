@@ -3,10 +3,23 @@
 // You can use Sass (SCSS) here: http://sass-lang.com/
 @import "bootstrap";
 
-.table-nonfluid{
-	width: auto;
-}
-
 th,td{
 	text-align: center;
+}
+
+#left
+{
+background-color:#EEEEEE;
+height:570px;
+width:20%;
+float:left;
+}
+
+#right
+{
+background-color:#D4EAE4;
+height:100%;
+width:80%;
+float:left;
+margin:0;
 }
