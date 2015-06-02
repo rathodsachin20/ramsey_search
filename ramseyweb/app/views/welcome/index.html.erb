@@ -3,8 +3,6 @@
 </div>
 </br></br>
 
-<div id="a">
-</div>
 <div id="left" class="text-center" onclick="notifread()"> 
 	<div class="btn" type="button">
 		<b>Updates</b> <span class="badge" id="notif"></span>
@@ -16,13 +14,29 @@
 		<thead>
 			<tr>
 				<th>Client ID</th>
-				<th>Cluster</th>
-				<th>IP Address</th>
 				<th>Port</th>
-				<!--<th>Algorithm Running</th>-->
+				<!--
+				<th>IP Address</th>
+				<th>Cluster</th>
+				<th>Algorithm Running</th>-->
 			</tr>
 		</thead>
 		<tbody id="c_body">
+		</tbody>
+	</table>
+</div>
+</br></br>
+
+<div class="container text-center center-block" id="right">
+	<table class="table table-striped " id ="graph" >
+		<thead>
+			<tr>
+				<th>Client ID</th>
+				<th>GSize</th>
+				<th>Count</th>
+			</tr>
+		</thead>
+		<tbody id="g_body">
 		</tbody>
 	</table>
 </div>

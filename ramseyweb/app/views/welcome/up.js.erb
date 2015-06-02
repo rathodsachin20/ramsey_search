@@ -1,7 +1,13 @@
 var data = '<%= raw @clients[:items].to_json%>';
-var obj = JSON.parse(data);
-
+var gdata = '<%= raw @status[:items].to_json%>';
+var find = '\n';
+var re = new RegExp(find, 'g');
+gdata = gdata.replace(re,"");
+var gobj = JSON.parse(gdata);
+var obj = jQuery.parseJSON(data);
 var bc, c_init=[], c_updtd=[], count=0;
+console.log(data);
+console.log(gobj.length)
 
 function getState(clist){
 	var el = document.getElementsByClassName('clientId');
@@ -24,10 +30,27 @@ function updateTable(){
 	}
 
 	$("#c_body").html(rows);
-}
+};
+
+function updateGraph(){
+	var rows = '';
+	for(var i=0; i<gobj.length; i++){
+		o = gobj[i];
+		var row = '<tr>';
+		for (var key in o) {
+			row += '<td class=' + key + '>' + o[key] + '</td>';
+		}
+		row += '</tr>';
+		rows += row;
+	}
+
+	$("#g_body").html(rows);
+};
+
 getState(c_init);
 console.log("initial client count: " + c_init.length);
 updateTable();
+updateGraph();
 getState(c_updtd);
 console.log("updated client count: " + c_updtd.length);
 

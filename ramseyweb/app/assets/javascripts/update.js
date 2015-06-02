@@ -1,10 +1,10 @@
 $(document).ready(function(){
 	var i=0;
-    setInterval(function(){updater(i++);},7000);
-    alert("hi there initieal");	
+	updater(i);
+    //setInterval(function(){updater(i++);},4000);
+    //alert("welcome partyof4. be patient.");	
   });
 
 function updater(i){
-	document.getElementById("a").innerHTML=i;
   	$.getScript('welcome/up.js');
 };
