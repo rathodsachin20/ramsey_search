@@ -361,6 +361,7 @@ int* PaleyGraph(gsize){
                                 v2 = j;
                         }
                         g[v1*gsize + v2] = 1;
+                        g[v2*gsize + v1] = 1;
                 }
         }
 
@@ -568,7 +569,7 @@ main(int argc,char *argv[])
 				/*
 				 * is it better and the i,j,count not taboo?
 				 */
-				if(count < best_count){
+				if(count>=0 && count < best_count){
 					if(count == count_1
 #ifdef USE_TABOO
 						&& !FIFOFindEdgeCount(taboo_list,i,j,count)

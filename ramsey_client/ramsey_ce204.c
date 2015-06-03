@@ -404,49 +404,18 @@ main(int argc,char *argv[])
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, sig_handler);
 
-	int *g;
 	int *new_g;
 	int gsize;
 	long count;
-	long count_1;
-	long count_2;
-	long count_3;
 	int i;
 	int j;
-	long best_count;
-	int best_i;
-	int best_j;
-	int best_k;
-	int best_l;
-	void *taboo_list;
 	int val,iter,jter;
 	char fname[255];
 	FILE *fp;
-    char bc[255];
-    int fd;
-	/*
-	 * start with graph of size 8
-	 */
 
 	if (argc < 2) {
-		gsize = 8;
-		g = (int *)malloc(gsize*gsize*sizeof(int));
-		if(g == NULL) {
-			exit(1);
-		}
-
-	/*
-	 * start out with all zeros
-	 */
-		memset(g,0,gsize*gsize*sizeof(int));
-		val = 0, iter = 0, jter=0;
-		for( iter=0; iter<gsize; iter++){
-			for( jter = 0; jter< gsize; jter++){
-				g[iter*gsize + jter]  = val;
-				val = 1 - val; 
-			}
-		}
-		//PrintGraph(g, gsize);
+		printf("usage: %s <paley graph size> [ex. %s 101 for R(7,7)]\n", argv[0], argv[0]);
+		fflush(stdout);
 
 	} else if (argc == 2) {
 
@@ -459,266 +428,25 @@ main(int argc,char *argv[])
 		printf("Starting from Paley graph of size %d\n.", gsize);
 		int* newg = lbgraph(gsize);
 		gsize = gsize*2 + 2;
-		printf("printing graph obtained by combining to file.\n");
-			sprintf(fname,"r-%d.txt",gsize);
-			fp = fopen(fname,"w");
-			char *key;
-			(void)MakeGraphKey(g,gsize,&key);
-		        PrintGraph(newg,gsize,fp, key);    
-        		fclose(fp);
-			free(key);
+		count = CliqueCount(newg,gsize);
+		if(count == 0)
+			printf("Eureka!  Counter-example found! size:%d\n", gsize);
+		sprintf(fname,"r-%d.txt",gsize);
+		fp = fopen(fname,"w");
+		printf("writing graph obtained by to a file: %s\n", fname);
+		char *key;
+		(void)MakeGraphKey(newg,gsize,&key);
+	        PrintGraph(newg,gsize,fp, key);    
+       		fclose(fp);
+		free(key);
 		//PrintGraph(newg, gsize*2+2);
 		fflush(stdout);
+		free(newg);
 		return 0;
 	}
 	else {
-		char graphfile[64];
-		strcpy(graphfile, argv[2]);
-		gsize = atoi(argv[1]);
-		//printf("gsize=%d", gsize);
-		g = (int *)malloc(gsize*gsize*sizeof(int));
-		ReadGraph(graphfile, &g, &gsize);
-		printf("Starting from given graph of size %d\n.", gsize);
-		fflush(stdout);
+		printf("usage: %s <paley graph size> [ex. %s 101 for R(7,7)]\n", argv[0], argv[0]);
 	}
-
-	/*
-	 *make a fifo to use as the taboo list
-	 */
-        taboo_list = FIFOInitEdge(TABOOSIZE);
-        if(taboo_list == NULL) {
-                exit(1);
-        }
-
-
-	/*
-	 * while we do not have a publishable result
-	 */
-	while(gsize < 206)
-	{
-		/*
-		 * find out how we are doing
-		 */
-		count = CliqueCount(g,gsize);
-
-		/*
-		 * if we have a counter example
-		 */
-		if(count == 0)
-		{
-			sprintf(fname,"solutions/CE-%d.txt",gsize);
-			fp = fopen(fname,"w");
-			char *key;
-			(void)MakeGraphKey(g,gsize,&key);
-            PrintGraph(g,gsize,fp, key);    
-            fclose(fp);
-			free(key);
-			//printf("Eureka!  Counter-example found!\n");
-			//PrintGraph(g,gsize);
-			//fflush(stdout);
-			/*
-			 * make a new graph one size bigger
-			 */
-			new_g = (int *)malloc((gsize+1)*(gsize+1)*sizeof(int));
-			if(new_g == NULL)
-				exit(1);
-			/*
-			 * copy the old graph into the new graph leaving the
-			 * last row and last column alone
-			 */
-			CopyGraph(g,gsize,new_g,gsize+1);
-
-			/*
-			 * zero out the last column and last row
-			 */
-			for(i=0; i < (gsize+1); i++)
-			{
-				if(drand48() > 0.5) {
-					new_g[i*(gsize+1) + gsize] = 0; // last column
-					new_g[gsize*(gsize+1) + i] = 0; // last row
-				}
-				else
-				{
-					new_g[i*(gsize+1) + gsize] = 1; // last column
-					new_g[gsize*(gsize+1) + i] = 1; // last row
-				}
-			}
-
-			/*
-			 * throw away the old graph and make new one the
-			 * graph
-			 */
-			free(g);
-			g = new_g;
-			gsize = gsize+1;
-
-			/*
-			 * reset the taboo list for the new graph
-			 */
-			taboo_list = FIFOResetEdge(taboo_list);
-
-			/*
-			 * keep going
-			 */
-			continue;
-		}
-
-		/*
-		 * otherwise, we need to consider flipping an edge
-		 *
-		 * let's speculative flip each edge, record the new count,
-		 * and unflip the edge.  We'll then remember the best flip and
-		 * keep it next time around
-		 *
-		 * only need to work with upper triangle of matrix =>
-		 * notice the indices
-		 */
-		best_count = BIGCOUNT;
-		for(i=0; i < gsize; i++)
-		{
-			for(j=i+1; j < gsize; j++)
-			{
-				/*
-				 * flip two edges (i,j), (i,random(j) + 1) 
-				 */
-				int k = getRandomJ(gsize);
-				int l = getRandomJ(gsize);
-
-				g[i*gsize+j] = 1 - g[i*gsize+j];
-				count_1 = CliqueCount(g,gsize);
-
-				if (k == j)
-					k = j + 1;
-				g[i*gsize + k] = 1 - g[i*gsize + k];
-				count_2 = CliqueCount(g,gsize);
-
-				if (l == j)
-					l = j + 1;
-				if (l == k)
-					l = (k + 1) % gsize;
-
-				g[i*gsize + l] = 1 - g[i*gsize + l];
-				count_3 = CliqueCount(g,gsize);
-
-                                count = (count_1 < count_2) ? count_1 : count_2 ;
-				count = (count_3 < count) ? count_3 : count ;
-
-				/*
-				 * is it better and the i,j,count not taboo?
-				 */
-				if(count < best_count){
-					if(count == count_1
-#ifdef USE_TABOO
-						&& !FIFOFindEdgeCount(taboo_list,i,j,count)
-#endif
-						)
-					{
-						best_count = count;
-						best_i = i;
-						best_j = j;
-						best_k = best_l = -1;
-					}
-					else if(count == count_2
-#ifdef USE_TABOO
-						&& (!FIFOFindEdgeCount(taboo_list,i,j,count)
-						|| !FIFOFindEdgeCount(taboo_list,i,k, count))
-#endif
-						)
-					{
-						best_count = count;
-						best_i = i;
-						best_j = j;
-						best_k = k;
-						best_l = -1;
-					}
-					else if(count == count_3
-#ifdef USE_TABOO
-						&& (!FIFOFindEdgeCount(taboo_list,i,j,count)
-						|| !FIFOFindEdgeCount(taboo_list,i,k, count)
-						|| !FIFOFindEdgeCount(taboo_list,i,l, count))
-#endif
-						)
-					{
-						best_count = count;
-						best_i = i;
-						best_j = j;
-						best_k = k;
-						best_l = l;
-					}
-				} 
-
-				/*
-				 * flip it back
-				 */
-				g[i*gsize+j] = 1 - g[i*gsize+j];
-				g[i*gsize+k] = 1 - g[i*gsize+k];
-				g[i*gsize+l] = 1 - g[i*gsize+l];
-			}
-		}
-
-		if(best_count == BIGCOUNT) {
-			printf("no best edge found, terminating\n");
-			exit(1);
-		}
-		
-		/*
-		 * keep the best flip we saw
-		 */
-		g[best_i*gsize + best_j] = 1 - g[best_i*gsize + best_j];
-		if (best_k != -1)
-			g[best_i*gsize + best_k] = 1 - g[best_i*gsize + best_k];
-		if (best_l != -1)
-			g[best_i*gsize + best_l] = 1 - g[best_i*gsize + best_l];
-
-		/*
-		 * taboo this graph configuration so that we don't visit
-		 * it again
-		 */
-		//count = CliqueCount(g,gsize);
-		count = best_count;
-#ifdef USE_TABOO
-//		FIFOInsertEdge(taboo_list,best_i,best_j);
-		FIFOInsertEdgeCount(taboo_list,best_i,best_j,count);
-		if (best_k != -1)
-			FIFOInsertEdgeCount(taboo_list,best_i,best_k,count);
-		if (best_l != -1)
-			FIFOInsertEdgeCount(taboo_list,best_i,best_l,count);
-#endif
-		printf("ce size: %d, best_count: %ld, best edges: (%d,%d) (%d,%d) (%d,%d), new colors: %d %d\n",
-			gsize,
-			best_count,
-			best_i,
-			best_j,
-			best_i,
-			best_k,
-			best_i,
-			best_l,
-			g[best_i*gsize+best_j],
-			g[best_i*gsize+best_k]);
-		fflush(stdout);
-		g_latest = g;
-		g_size_latest = gsize;
-		g_count_latest = count;
-		/*
-		 * rinse and repeat
-		 */
-
-        /* write update to file */	
-	    sprintf(fname,"solutions/CE-%d-upd.txt",gsize);
-            sprintf(bc,"%d",best_count);
-            fp = fopen(fname, "w+");
-            if (fp == NULL) {
-                printf("\n Ah file error ? \n");
-                exit(0);
-    
-            }
-            fd = fileno(fp);
-            ftruncate(fd, 0);
-            PrintGraph(g,gsize,fp, bc);
-	        fclose(fp);
-	}
-
-        FIFODeleteGraph(taboo_list);
 
 	return(0);
 

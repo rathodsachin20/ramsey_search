@@ -5,13 +5,13 @@ CFLAGS = -g
 THREADS = -lpthread
 COMPILE = $(CC) $(INCLUDES) $(CFLAGS) 
 
-INCL=./graph_utils.h ./jrb.h ./jval.h ./dllist.h ./fifo.h ./connect.h
+INCL=./graph_utils.h ./jrb.h ./jval.h ./dllist.h ./fifo.h 
 COMMON=.
 PRED=.
-BOBJ= $(COMMON)/jval.o $(COMMON)/jrb.o $(COMMON)/dllist.o $(COMMON)/fifo.o $(COMMON)/connect.o
+BOBJ= $(COMMON)/jval.o $(COMMON)/jrb.o $(COMMON)/dllist.o $(COMMON)/fifo.o 
 LIBS= -lm 
 
-PROGRAMS = simple_taboo_search simple_taboo_search-7 test_clique_count anneal random multi_flip multi_flip_3 hybrid_search ramsey_graph 
+PROGRAMS =  ramsey_ce204 simple_taboo_search simple_taboo_search-7 test_clique_count multi_flip multi_flip_3 mf3n ramsey_proj ramsey_proj_basic ramsey_proj_basic_3 ramsey_proj_new hybrid_search ramsey_graph ramsey_multi_thread
 
 all: $(PROGRAMS)
 
@@ -33,6 +33,23 @@ multi_flip: ramsey_multi_flip.c  $(INCL) ${BOBJ}
 multi_flip_3: ramsey_multi_flip_3.c  $(INCL) ${BOBJ}
 	$(COMPILE) ${INCLUDES} -o ramsey_multi_flip_3 ramsey_multi_flip_3.c $(BOBJ) $(LIBS)
 
+ramsey_ce204: ramsey_ce204.c  $(INCL) ${BOBJ}
+	$(COMPILE) ${INCLUDES} -o ramsey_ce204 ramsey_ce204.c $(BOBJ) $(LIBS)
+
+mf3n: ramsey_mf3_new.c  $(INCL) ${BOBJ}
+	$(COMPILE) ${INCLUDES} -o ramsey_mf3_new ramsey_mf3_new.c $(BOBJ) $(LIBS)
+
+ramsey_proj: ramsey_proj.c  $(INCL) ${BOBJ}
+	$(COMPILE) ${INCLUDES} -o ramsey_proj ramsey_proj.c $(BOBJ) $(LIBS)
+
+ramsey_proj_basic: ramsey_proj_basic.c  $(INCL) ${BOBJ}
+	$(COMPILE) ${INCLUDES} -o ramsey_proj_basic ramsey_proj_basic.c $(BOBJ) $(LIBS)
+
+ramsey_proj_basic_3: ramsey_proj_basic_3.c  $(INCL) ${BOBJ}
+	$(COMPILE) ${INCLUDES} -o ramsey_proj_basic_3 ramsey_proj_basic_3.c $(BOBJ) $(LIBS)
+
+ramsey_proj_new: ramsey_proj_new.c  $(INCL) ${BOBJ}
+	$(COMPILE) ${INCLUDES} -o ramsey_proj_new ramsey_proj_new.c $(BOBJ) $(LIBS)
 
 hybrid_search: simple_hybrid_search-7.c  $(INCL) ${BOBJ}
 	$(COMPILE) ${INCLUDES} -o ramsey_hybrid_search simple_hybrid_search-7.c $(BOBJ) $(LIBS)
@@ -68,5 +85,4 @@ connect.o: connect.c connect.h
 	$(COMPILE) ${INCLUDES} -c connect.c
 
 clean:
-	rm -rf *.o core
-	rm -rf *.dSYM core
+	rm -f *.o core ramsey_multi_flip_3 ramsey_proj ramsey_proj_basic ramsey_proj_new ramsey_proj_basic_3 ramsey_mf3_new ramsey_ce204

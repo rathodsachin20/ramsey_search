@@ -342,6 +342,7 @@ int* PaleyGraph(gsize){
                                 v2 = j;
                         }
                         g[v1*gsize + v2] = 1;
+                        g[v2*gsize + v1] = 1;
                 }
         }
 

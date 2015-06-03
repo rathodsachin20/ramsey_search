@@ -4,10 +4,8 @@ from boto.dynamodb2.table import Table
 from boto.dynamodb2 import connect_to_region
 
 REGION = 'us-west-2'
-#AWS_ACCESS_KEY_ID = "AKIAJFXN2KDHWAHTY6TQ"
-#AWS_SECRET_ACCESS_KEY = "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"
-AWS_ACCESS_KEY_ID = "AKIAJRBEPVLQDVPVDQ5A"
-AWS_SECRET_ACCESS_KEY = "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"
+AWS_ACCESS_KEY_ID = ""
+AWS_SECRET_ACCESS_KEY = ""
 
 class DynamoDB:
 
